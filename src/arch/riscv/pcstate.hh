@@ -44,6 +44,7 @@
 
 #include "arch/generic/pcstate.hh"
 #include "arch/riscv/regs/vector.hh"
+#include "arch/riscv/regs/matrix.hh"
 #include "enums/PrivilegeModeSet.hh"
 #include "enums/RiscvType.hh"
 
@@ -65,6 +66,7 @@ class PCState : public GenericISA::UPCState<4>
 
     bool _compressed = false;
     RiscvType _rvType = RV64;
+    uint64_t _rlenb = 32; // TODO: Get value from somewhere else
     VTYPE _vtype = (1ULL << 63); // vtype.vill = 1 at initial;
     uint32_t _vl = 0;
 
@@ -92,6 +94,7 @@ class PCState : public GenericISA::UPCState<4>
         _rvType = pcstate._rvType;
         _vtype = pcstate._vtype;
         _vl = pcstate._vl;
+        _rlenb = pcstate._rlenb;
     }
 
     void compressed(bool c) { _compressed = c; }
@@ -105,6 +108,8 @@ class PCState : public GenericISA::UPCState<4>
 
     void vl(uint32_t v) { _vl = v; }
     uint32_t vl() const { return _vl; }
+
+    uint64_t rlenb() const { return _rlenb; };
 
     uint64_t size() const { return _compressed ? 2 : 4; }
 

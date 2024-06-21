@@ -1,0 +1,146 @@
+let {{
+
+def setRlen():
+    return "uint32_t rlen = RlenbBits * 8;\n"
+def setRlenb():
+    return "uint32_t rlenb = RlenbBits;\n"
+
+def MMemBase(name, Name, ea_code, code, base_class,
+             mem_flags, inst_flags,
+             declare_template_base=MatrixMacroDeclare,
+             decode_template=MatrixDecode, exec_template_base='',
+             op_class='',
+             is_macroop=True):
+    iop = InstObjParams(name, Name, base_class, 
+        { 'code': code,
+          'ea_code': ea_code,
+          'op_class': op_class },
+          inst_flags)
+
+    constructTemplate = eval(exec_template_base + 'Constructor')
+
+    header_output   = declare_template_base.subst(iop)
+    decoder_output  = constructTemplate.subst(iop)
+    decode_block    = decode_template.subst(iop)
+    exec_output     = ''
+
+    if not is_macroop:
+        return (header_output, decoder_output, decode_block, exec_output)
+    
+    micro_class_name = exec_template_base + 'MicroInst'
+    microiop = InstObjParams(name + '_micro',
+        Name + 'Micro',
+        exec_template_base + 'MicroInst',
+        {'ea_code': ea_code,
+         'set_rlenb': setRlenb(),
+         'set_rlen': setRlen(),
+         'code': code},
+        inst_flags
+        )
+    
+    microDeclTemplate = eval(exec_template_base + 'MicroDeclare')
+    microConsTemplate = eval(exec_template_base + 'MicroConstructor')
+    microExecTemplate = eval(exec_template_base + 'MicroExecute')
+    microInitTemplate = eval(exec_template_base + 'MicroInitiateAcc')
+    microCompTemplate = eval(exec_template_base + 'MicroCompleteAcc')
+    header_output = microDeclTemplate.subst(microiop) + header_output
+    decoder_output = microConsTemplate.subst(microiop) + decoder_output
+    micro_exec_output = (microExecTemplate.subst(microiop) +
+        microInitTemplate.subst(microiop) +
+        microCompTemplate.subst(microiop))
+    exec_output += micro_exec_output
+
+    return (header_output, decoder_output, decode_block, exec_output)
+
+
+def MArithBase(name, Name, code, base_class,
+             inst_flags,
+             declare_template_base=MatrixMacroDeclare,
+             decode_template=MatrixDecode, exec_template_base='',
+             op_class='',
+             is_macroop=True):
+    iop = InstObjParams(name, Name, base_class, 
+        { 'code': code,
+          'op_class': op_class },
+          inst_flags)
+
+    constructTemplate = eval(exec_template_base + 'Constructor')
+
+    header_output   = declare_template_base.subst(iop)
+    decoder_output  = constructTemplate.subst(iop)
+    decode_block    = decode_template.subst(iop)
+    exec_output     = ''
+
+    if not is_macroop:
+        return (header_output, decoder_output, decode_block, exec_output)
+    
+    micro_class_name = exec_template_base + 'MicroInst'
+    microiop = InstObjParams(name + '_micro',
+        Name + 'Micro',
+        exec_template_base + 'MicroInst',
+        {'code': code, 
+         'set_rlenb': setRlenb(),
+         'set_rlen': setRlen(),
+         'op_class': op_class},
+        inst_flags
+        )
+
+    microDeclTemplate = eval(exec_template_base + 'MicroDeclare')
+    microConsTemplate = eval(exec_template_base + 'MicroConstructor')
+    microExecTemplate = eval(exec_template_base + 'MicroExecute')
+    header_output = microDeclTemplate.subst(microiop) + header_output
+    decoder_output = microConsTemplate.subst(microiop) + decoder_output
+    micro_exec_output = microExecTemplate.subst(microiop)
+    exec_output += micro_exec_output
+
+    return (header_output, decoder_output, decode_block, exec_output)
+
+}};
+
+// EA = Rs1 + (microIdx // cols) * Rs2 + (microIdx % cols) * sew;
+// mload md, rs2, (rs1)
+def format MatrixLoadOp(
+    code,
+    ea_code={{
+        EA = Rs1 + ((uint64_t) microIdx / 8) * Rs2 + (microIdx % 8) * 4;
+    }},
+    mem_flags=[],
+    *flags
+) {{
+    (header_output, decoder_output, decode_block, exec_output) = \
+        MMemBase(name, Name, ea_code, code, 'MatrixLoadMacroInst', mem_flags, flags, op_class='MemReadOp', exec_template_base='MatrixLoad')
+}};
+
+
+// mstore md, rs2, (rs1)
+def format MatrixStoreOp(
+    code,
+    ea_code={{
+        EA = Rs1 + ((uint64_t) microIdx / 8) * Rs2 + (microIdx % 8) * 4;
+    }},
+    mem_flags=[],
+    *flags
+) {{
+    (header_output, decoder_output, decode_block, exec_output) = \
+        MMemBase(name, Name, ea_code, code, 'MatrixStoreMacroInst', mem_flags, flags, op_class='MemWriteOp', exec_template_base='MatrixStore')
+}};
+
+
+// fmmacc md, ms1, ms2 # md = md + ms1 * ms2
+def format MatrixArithLineOp(
+    code,
+    *flags
+) {{
+    (header_output, decoder_output, decode_block, exec_output) = \
+        MArithBase(name, Name, code, 'MatrixArithMacroInst', flags, op_class='OpClass::Matrix', exec_template_base='MatrixArithLine')
+}};
+
+
+// mzero md
+def format MatrixArithOp(
+    code,
+    *flags
+) {{
+    (header_output, decoder_output, decode_block, exec_output) = \
+        MArithBase(name, Name, code, 'MatrixArithMacroInst', flags, decode_template=MatrixArithDecode, op_class='OpClass::Matrix', exec_template_base='MatrixArith')
+}};

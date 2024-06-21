@@ -201,6 +201,8 @@ enum MiscRegIndex
     MISCREG_VTYPE,
     MISCREG_VLENB,
 
+    MISCREG_RLENB,
+
     // These registers are not in the standard, hence does not exist in the
     // CSRData map. These are mainly used to provide a minimal implementation
     // for non-maskable-interrupt in our simple cpu.
@@ -510,7 +512,9 @@ enum CSRIndex
     CSR_VCSR         = 0x00F,
     CSR_VL           = 0xC20,
     CSR_VTYPE        = 0xC21,
-    CSR_VLENB        = 0xC22
+    CSR_VLENB        = 0xC22,
+
+    CSR_RLENB        = 0xCC1
 };
 
 struct CSRMetadata
@@ -1181,7 +1185,10 @@ const std::unordered_map<int, CSRMetadata> CSRData = {
     {CSR_VTYPE,
         {"vtype", MISCREG_VTYPE, rvTypeFlags(RV64, RV32), isaExtsFlags('v')}},
     {CSR_VLENB,
-        {"VLENB", MISCREG_VLENB, rvTypeFlags(RV64, RV32), isaExtsFlags('v')}}
+        {"VLENB", MISCREG_VLENB, rvTypeFlags(RV64, RV32), isaExtsFlags('v')}},
+    // 
+    {CSR_RLENB,
+        {"RLENB", MISCREG_RLENB, rvTypeFlags(RV64, RV32), isaExtsFlags()}}
 };
 
 /**

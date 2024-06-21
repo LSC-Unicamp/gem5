@@ -180,6 +180,11 @@ BitUnion64(ExtMachInst)
     // vsetvl
     Bitfield<31, 25>    bit31_25;
 
+    //matrix
+    Bitfield<11,  7>    mrd;
+    Bitfield<19, 15>    mrs1;
+    Bitfield<24, 20>    mrs2;
+
 EndBitUnion(ExtMachInst)
 
 constexpr unsigned MaxVecLenInBits = 65536;

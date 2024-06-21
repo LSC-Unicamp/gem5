@@ -94,6 +94,8 @@ class ISA : public BaseISA
     */
     unsigned elen;
 
+    unsigned rlen;
+
     /** The combination of privilege modes
      *  in Privilege Levels section of RISC-V privileged spec
      */
@@ -184,6 +186,9 @@ class ISA : public BaseISA
     unsigned getVecElemLenInBits() { return elen; }
 
     int64_t getVectorLengthInBytes() const override { return vlen >> 3; }
+
+    unsigned getRLenInBits() { return rlen; }
+    unsigned getRLenInBytes() { return rlen >> 3; }
 
     PrivilegeModeSet getPrivilegeModeSet() { return _privilegeModeSet; }
 

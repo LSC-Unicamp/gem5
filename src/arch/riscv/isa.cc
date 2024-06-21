@@ -47,6 +47,7 @@
 #include "arch/riscv/regs/int.hh"
 #include "arch/riscv/regs/misc.hh"
 #include "arch/riscv/regs/vector.hh"
+#include "arch/riscv/regs/matrix.hh"
 #include "base/bitfield.hh"
 #include "base/compiler.hh"
 #include "base/logging.hh"
@@ -203,6 +204,8 @@ namespace RiscvISA
     [MISCREG_VTYPE]         = "VTYPE",
     [MISCREG_VLENB]         = "VLENB",
 
+    [MISCREG_RLENB]        = "RLENB",
+
     [MISCREG_NMIVEC]        = "NMIVEC",
     [MISCREG_NMIE]          = "NMIE",
     [MISCREG_NMIP]          = "NMIP",
@@ -253,7 +256,7 @@ namespace
 RegClass vecElemClass(VecElemClass, VecElemClassName, 0, debug::IntRegs);
 RegClass vecPredRegClass(VecPredRegClass, VecPredRegClassName, 0,
         debug::IntRegs);
-RegClass matRegClass(MatRegClass, MatRegClassName, 0, debug::MatRegs);
+// RegClass matRegClass(MatRegClass, MatRegClassName, 0, debug::MatRegs);
 RegClass ccRegClass(CCRegClass, CCRegClassName, 0, debug::IntRegs);
 
 } // anonymous namespace
@@ -305,6 +308,12 @@ ISA::copyRegsFrom(ThreadContext *src)
     for (auto &id: vecRegClass) {
         src->getReg(id, &vc);
         tc->setReg(id, &vc);
+    }
+    // Fourth loop through the matrix registers.
+    RiscvISA::MatRegContainer mc;
+    for (auto &id: matRegClass) {
+        src->getReg(id, &mc);
+        tc->setReg(id, &mc);
     }
 
     // Copying Misc Regs
@@ -608,6 +617,10 @@ ISA::readMiscReg(RegIndex idx)
         {
             return readMiscRegNoEffect(MISCREG_FFLAGS) |
                   (readMiscRegNoEffect(MISCREG_FRM) << FRM_OFFSET);
+      case MISCREG_RLENB:
+        {
+            // TODO: Get length in bits from a constant
+            return (uint64_t) 256 / 8;
         }
       default:
         // Try reading HPM counters

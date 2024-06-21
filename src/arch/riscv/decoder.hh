@@ -33,6 +33,7 @@
 #include "arch/generic/decode_cache.hh"
 #include "arch/generic/decoder.hh"
 #include "arch/riscv/insts/vector.hh"
+#include "arch/riscv/insts/matrix.hh"
 #include "arch/riscv/types.hh"
 #include "base/logging.hh"
 #include "base/types.hh"
@@ -63,6 +64,7 @@ class Decoder : public InstDecoder
     uint32_t vlen;
     uint32_t elen;
     bool _enableZcd;
+    uint32_t rlen;
 
     virtual StaticInstPtr decodeInst(ExtMachInst mach_inst);
 
