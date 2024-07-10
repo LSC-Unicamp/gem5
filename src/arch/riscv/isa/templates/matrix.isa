@@ -21,12 +21,14 @@ def template MatrixArithConstructor {{
 
         StaticInstPtr microop;
         
-        // TODO: Use rlen to calculate the number of elements
-        uint64_t lines = rlen / 4;
-        uint64_t columns = rlen / 4;
+        uint64_t lines = rlen / 32;
+        uint64_t elem_width = 32;
+        uint64_t columns = rlen / elem_width;
         uint64_t elems = lines * columns;
 
-        for (uint32_t i = 0; i < 64; i++) {
+        printf("%lu %lu \n", rlen, elems);
+
+        for (uint32_t i = 0; i < elems; i++) {
             microop = new %(class_name)sMicro(_machInst, i);
             microop->setDelayedCommit();
             this->microops.push_back(microop);
@@ -136,13 +138,10 @@ def template MatrixArithMicroExecute {{
     {
         %(op_decl)s;
         %(op_rd)s;
-        %(set_rlen)s;
-        %(set_rlenb)s;
+        // % (set_rlen)s;
 
         uint32_t i = microIdx;
-        // uint32_t i = 0;
 
-        // TODO: Fix it
         %(code)s;
 
         %(op_wb)s;
@@ -228,9 +227,7 @@ def template MatrixLoadMicroExecute {{
         Addr EA;
         %(op_decl)s;
         %(op_rd)s;
-        %(set_rlen)s;
-
-        // printf("%lu %lu %u %u\n", Rs1, Rs2, microIdx, rlen);
+        // % (set_rlen)s;
 
         %(ea_code)s;
 
@@ -355,7 +352,11 @@ def template MatrixLoadConstructor {{
 
         StaticInstPtr microop;
         
-        // TODO: Calculate total number of microops
+        uint64_t lines = rlen / 4;
+        uint64_t elem_width = 4;
+        uint64_t columns = rlen / elem_width;
+        uint64_t elems = lines * columns;
+
         for (uint32_t i = 0; i < 64; i++) {
             microop = new %(class_name)sMicro(_machInst, i);
             microop->setDelayedCommit();

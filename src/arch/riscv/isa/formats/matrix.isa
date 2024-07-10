@@ -1,7 +1,7 @@
 let {{
 
 def setRlen():
-    return "uint32_t rlen = RlenbBits * 8;\n"
+    return "uint32_t rlen = RlenbBits >> 3;\n"
 def setRlenb():
     return "uint32_t rlenb = RlenbBits;\n"
 

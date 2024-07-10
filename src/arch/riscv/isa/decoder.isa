@@ -1011,6 +1011,10 @@ decode QUADRANT default Unknown::unknown() {
                 0x01: MatrixArithOp::fmsub({{
                     Mrd_sf[i] = Mrs1_sf[i] - Mrs2_sf[i];
                 }});
+                // FMSMUL
+                0x02: MatrixArithOp::fmmul({{
+                    Mrd_sf[i] = Mrs1_sf[i] * Rs2_sf;
+                }});
             }
             // FMMAC
             0x6: MatrixArithOp::fmmacc({{
