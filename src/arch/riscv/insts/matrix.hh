@@ -92,6 +92,28 @@ class MatrixArithMicroInst : public MatrixMicroInst {
     {}
 };
 
+class MatrixUnaryArithMacroInst : public MatrixArithMacroInst {
+  protected:
+    MatrixUnaryArithMacroInst(const char* mnem, ExtMachInst _machInst,
+                         OpClass __opClass, uint64_t _rlen = 256)
+        : MatrixArithMacroInst(mnem, _machInst, __opClass, _rlen)
+    {}
+
+    std::string generateDisassembly(
+        Addr pc, const loader::SymbolTable *symtab) const override;
+};
+
+class MatrixUnaryArithMicroInst : public MatrixArithMicroInst {
+  protected:
+    MatrixUnaryArithMicroInst(const char* mnem, ExtMachInst _machInst,
+                         OpClass __opClass, uint32_t _microIdx)
+        : MatrixArithMicroInst(mnem, _machInst, __opClass, _microIdx)
+    {}
+
+    std::string generateDisassembly(
+        Addr pc, const loader::SymbolTable *symtab) const override;
+};
+
 class MatrixArithLineMicroInst : public MatrixMicroInst {
   protected:
     Request::Flags memAccessFlags;

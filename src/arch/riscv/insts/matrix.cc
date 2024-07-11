@@ -76,5 +76,21 @@ MatrixArithLineMicroInst::generateDisassembly(Addr pc, const loader::SymbolTable
     return ss.str();
 }
 
+std::string
+MatrixUnaryArithMacroInst::generateDisassembly(Addr pc, const loader::SymbolTable *symtab) const {
+    std::stringstream ss;
+    ss << mnemonic << ' '
+        << registerName(destRegIdx(0));
+    return ss.str();
+}
+
+std::string
+MatrixUnaryArithMicroInst::generateDisassembly(Addr pc, const loader::SymbolTable *symtab) const {
+    std::stringstream ss;
+    ss << mnemonic << ' '
+        << registerName(destRegIdx(0));
+    return ss.str();
+}
+
 } // namespace RiscvISA
 } // namespace gem5
