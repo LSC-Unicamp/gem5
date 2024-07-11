@@ -168,4 +168,5 @@ def bitfield SIMM3      simm3;
 def bitfield MRD    <11:7>;
 def bitfield MRS1   <19:15>;
 def bitfield MRS2   <24:20>;
+def bitfield MRS3    <11:7>;
 // def bitfield MWIDTH <>;

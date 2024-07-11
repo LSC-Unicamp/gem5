@@ -102,6 +102,7 @@ def operands {{
     'Mrd':  MatRegOp('mc', 'MRD',  'IsMatrix', 1),
     'Mrs1': MatRegOp('mc', 'MRS1', 'IsMatrix', 2),
     'Mrs2': MatRegOp('mc', 'MRS2', 'IsMatrix', 3),
+    'Mrs3': MatRegOp('mc', 'MRS3', 'IsMatrix', 4),
 
 #Memory Operand
     'Mem': MemOp('ud', None, (None, 'IsLoad', 'IsStore'), 5),

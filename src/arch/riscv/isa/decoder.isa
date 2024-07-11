@@ -998,7 +998,7 @@ decode QUADRANT default Unknown::unknown() {
                     Mrd_uw[i] = Mem_uw;
                 }});
                 0x01: MatrixStoreOp::mstore({{
-                    Mem_uw = (uint32_t) *(Mrd_uw + i);
+                    Mem_uw = Mrd_uw[i];
                 }});
             }
             // ARITHMETIC
@@ -1017,7 +1017,7 @@ decode QUADRANT default Unknown::unknown() {
                 }});
             }
             // FMMAC
-            0x6: MatrixArithOp::fmmacc({{
+            0x6: MatrixArithLineOp::fmmacc({{
                 uint32_t row = i / 8;
                 uint32_t col = i % 8;
                 uint32_t row_stride = 8;
@@ -1028,10 +1028,10 @@ decode QUADRANT default Unknown::unknown() {
                     acc += Mrs1_sf[row * row_stride + j] * Mrs2_sf[col * row_stride + j];
                 }
 
-                Mrd_sf[i] = acc;
+                Mrd_sf[i] = Mrs3_sf[i] + acc;
             }});
             // MZERO
-            0x7: MatrixArithOp::mzero({{
+            0x7: MatrixUnaryArithOp::mzero({{
                 Mrd_uw[i] = 0;
             }});
         }

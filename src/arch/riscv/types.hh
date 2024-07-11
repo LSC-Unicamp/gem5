@@ -184,6 +184,7 @@ BitUnion64(ExtMachInst)
     Bitfield<11,  7>    mrd;
     Bitfield<19, 15>    mrs1;
     Bitfield<24, 20>    mrs2;
+    Bitfield<11,  7>    mrs3;
 
 EndBitUnion(ExtMachInst)
 

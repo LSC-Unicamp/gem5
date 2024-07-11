@@ -132,15 +132,33 @@ def format MatrixArithLineOp(
     *flags
 ) {{
     (header_output, decoder_output, decode_block, exec_output) = \
-        MArithBase(name, Name, code, 'MatrixArithMacroInst', flags, op_class='OpClass::Matrix', exec_template_base='MatrixArithLine')
+        MArithBase(name, Name, code, 'MatrixArithMacroInst', 
+                   flags, decode_template=MatrixArithDecode, 
+                   op_class='OpClass::Matrix', 
+                   exec_template_base='MatrixArithLine')
 }};
 
 
-// mzero md
+// fmmadd
 def format MatrixArithOp(
     code,
     *flags
 ) {{
     (header_output, decoder_output, decode_block, exec_output) = \
-        MArithBase(name, Name, code, 'MatrixArithMacroInst', flags, decode_template=MatrixArithDecode, op_class='OpClass::Matrix', exec_template_base='MatrixArith')
+        MArithBase(name, Name, code, 'MatrixArithMacroInst', 
+                   flags, decode_template=MatrixArithDecode, 
+                   op_class='OpClass::Matrix', 
+                   exec_template_base='MatrixArith')
+}};
+
+// mzero md
+def format MatrixUnaryArithOp(
+    code,
+    *flags
+) {{
+    (header_output, decoder_output, decode_block, exec_output) = \
+        MArithBase(name, Name, code, 'MatrixUnaryArithMacroInst', 
+                   flags, decode_template=MatrixArithDecode, 
+                   op_class='OpClass::Matrix', 
+                   exec_template_base='MatrixArith')
 }};

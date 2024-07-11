@@ -26,8 +26,6 @@ def template MatrixArithConstructor {{
         uint64_t columns = rlen / elem_width;
         uint64_t elems = lines * columns;
 
-        printf("%lu %lu \n", rlen, elems);
-
         for (uint32_t i = 0; i < elems; i++) {
             microop = new %(class_name)sMicro(_machInst, i);
             microop->setDelayedCommit();
@@ -41,15 +39,20 @@ def template MatrixArithConstructor {{
 
 
 def template MatrixArithLineConstructor {{
-    %(class_name)s::%(class_name)s(ExtMachInst _machInst)
-        : %(base_class)s("%(mnemonic)s", _machInst, %(op_class)s)
+    %(class_name)s::%(class_name)s(ExtMachInst _machInst, uint64_t _rlen)
+        : %(base_class)s("%(mnemonic)s", _machInst, %(op_class)s, _rlen)
     {
         %(set_reg_idx_arr)s;
         %(constructor)s;
 
         StaticInstPtr microop;
         
-        for (uint32_t i = 0; i < 64; i++) {
+        uint64_t lines = rlen / 32;
+        uint64_t elem_width = 32;
+        uint64_t columns = rlen / elem_width;
+        uint64_t elems = lines * columns;
+
+        for (uint32_t i = 0; i < elems; i++) {
             microop = new %(class_name)sMicro(_machInst, i);
             microop->setDelayedCommit();
             this->microops.push_back(microop);
@@ -82,7 +85,7 @@ def template MatrixArithLineMicroDeclare {{
     class %(class_name)s : public %(base_class)s
     {
       private:
-        RegId srcRegIdxArr[2];
+        RegId srcRegIdxArr[3];
         RegId destRegIdxArr[1];
       public:
         %(class_name)s(ExtMachInst _machInst);
@@ -91,6 +94,24 @@ def template MatrixArithLineMicroDeclare {{
         Fault execute(ExecContext *, trace::InstRecord *) const override;
 
         using %(base_class)s::generateDisassembly;
+    };
+}};
+
+
+def template MatrixUnaryArithMicroDeclare {{
+    class %(class_name)s : public %(base_class)s
+    {
+      private:
+        RegId srcRegIdxArr[2];
+        RegId destRegIdxArr[1];
+      public:
+        %(class_name)s(ExtMachInst _machInst);
+        %(class_name)s(ExtMachInst _machInst, uint32_t _microIdx);
+        
+        Fault execute(ExecContext *, trace::InstRecord *) const override;
+
+        std::string generateDisassembly(
+            Addr pc, const loader::SymbolTable *symtab) const override;
     };
 }};
 
@@ -126,6 +147,7 @@ def template MatrixArithLineMicroConstructor {{
     _numTypedDestRegs[MatRegClass]++;
     setSrcRegIdx(_numSrcRegs++, matRegClass[_machInst.mrs1]);
     setSrcRegIdx(_numSrcRegs++, matRegClass[_machInst.mrs2]);
+    setSrcRegIdx(_numSrcRegs++, matRegClass[_machInst.mrs3]);
 }
 
 }};
@@ -155,26 +177,13 @@ def template MatrixArithLineMicroExecute {{
     %(class_name)s::execute(ExecContext *xc,
         trace::InstRecord *traceData) const
     {
-        // (op_decl)s;
-        // (op_rd)s;
+        %(op_decl)s;
+        %(op_rd)s;
+        // % (set_rlen)s;
 
-        auto &Md = *(RiscvISAInst::MatRegContainer *) xc->getWritableRegOperand(this, 0);
-
-        RiscvISAInst::MatRegContainer mrs1, mrs2;
-        xc->getRegOperand(this, 0, &mrs1);
-        xc->getRegOperand(this, 1, &mrs2);
-
-        
         uint32_t i = microIdx;
 
-        auto drow = Md.as<float32_t>();
-        auto m1 = mrs1.as<float32_t>();
-        auto m2 = mrs2.as<float32_t>();
-
-        uint32_t lin = microIdx / 8;
-        uint32_t col = microIdx % 8;
-        for (int j = 0; j < 8; j++)
-            drow[i] = fadd(drow[i], fmul(m1[lin * 8 + j], m2[col * 8 + j]));
+        %(code)s;
 
         %(op_wb)s;
         return NoFault;
