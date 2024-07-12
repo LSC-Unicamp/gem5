@@ -1022,13 +1022,14 @@ decode QUADRANT default Unknown::unknown() {
                 uint32_t col = i % 8;
                 uint32_t row_stride = 8;
 
-                float acc = 0.f;
+                float acc = Mrs3_sf[i];
 
                 for (int j = 0; j < 8; j++) {
                     acc += Mrs1_sf[row * row_stride + j] * Mrs2_sf[col * row_stride + j];
                 }
 
-                Mrd_sf[i] = Mrs3_sf[i] + acc;
+                // Mrd_sf[i] = Mrs3_sf[i] + acc;
+                Mrd_sf[i] = acc;
             }});
             // MZERO
             0x7: MatrixUnaryArithOp::mzero({{
