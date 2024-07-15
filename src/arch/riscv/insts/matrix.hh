@@ -147,7 +147,7 @@ class MatrixMemMicroInst : public MatrixMicroInst {
 class MatrixLoadMacroInst : public MatrixMemMacroInst {
   protected:
     MatrixLoadMacroInst(const char* mnem, ExtMachInst _machInst,
-                    OpClass __opClass)
+                    OpClass __opClass, uint64_t _rlen = 256)
         : MatrixMemMacroInst(mnem, _machInst, __opClass)
     {
         this->flags[IsLoad] = true;
@@ -169,7 +169,7 @@ class MatrixLoadMicroInst : public MatrixMicroInst {
 class MatrixStoreMacroInst : public MatrixMemMacroInst {
   protected:
     MatrixStoreMacroInst(const char* mnem, ExtMachInst _machInst,
-                    OpClass __opClass)
+                    OpClass __opClass, uint64_t _rlen = 256)
         : MatrixMemMacroInst(mnem, _machInst, __opClass)
     {
         this->flags[IsStore] = true;
@@ -193,6 +193,29 @@ class MatrixStoreMicroInst : public MatrixMicroInst {
     std::string generateDisassembly(
         Addr pc, const loader::SymbolTable *symtab) const override;
 };
+
+class MatrixMoveMacroInst : public MatrixMacroInst {
+  protected:
+    MatrixMoveMacroInst(const char* mnem, ExtMachInst _machInst,
+                         OpClass __opClass, uint64_t _rlen = 256)
+        : MatrixMacroInst(mnem, _machInst, __opClass, _rlen)
+    {}
+
+    std::string generateDisassembly(
+        Addr pc, const loader::SymbolTable *symtab) const override;
+};
+
+class MatrixMoveMicroInst : public MatrixMicroInst {
+  protected:
+    MatrixMoveMicroInst(const char* mnem, ExtMachInst _machInst,
+                         OpClass __opClass, uint32_t _microIdx)
+        : MatrixMicroInst(mnem, _machInst, __opClass, _microIdx)
+    {}
+
+    std::string generateDisassembly(
+        Addr pc, const loader::SymbolTable *symtab) const override;
+};
+
 
 } // namespace RiscvISA
 } // namespace gem5

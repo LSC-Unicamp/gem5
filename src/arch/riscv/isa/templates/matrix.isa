@@ -12,7 +12,8 @@ def template MatrixMacroDeclare {{
 }};
 
 
-def template MatrixArithConstructor {{
+// TODO: Check if working correctly
+def template MatrixMacroConstructor {{
     %(class_name)s::%(class_name)s(ExtMachInst _machInst, uint64_t _rlen)
         : %(base_class)s("%(mnemonic)s", _machInst, %(op_class)s, _rlen)
     {
@@ -38,9 +39,9 @@ def template MatrixArithConstructor {{
 }};
 
 
-def template MatrixArithLineConstructor {{
+def template MatrixMacroMemConstructor {{
     %(class_name)s::%(class_name)s(ExtMachInst _machInst, uint64_t _rlen)
-        : %(base_class)s("%(mnemonic)s", _machInst, %(op_class)s, _rlen)
+        : %(base_class)s("%(mnemonic)s", _machInst, %(op_class)s)
     {
         %(set_reg_idx_arr)s;
         %(constructor)s;
@@ -57,6 +58,25 @@ def template MatrixArithLineConstructor {{
             microop->setDelayedCommit();
             this->microops.push_back(microop);
         }
+
+        this->microops.front()->setFirstMicroop();
+        this->microops.back()->setLastMicroop();
+    }
+}};
+
+
+def template MatrixSingleMacroConstructor {{
+    %(class_name)s::%(class_name)s(ExtMachInst _machInst, uint64_t _rlen)
+        : %(base_class)s("%(mnemonic)s", _machInst, %(op_class)s, _rlen)
+    {
+        %(set_reg_idx_arr)s;
+        %(constructor)s;
+
+        StaticInstPtr microop;
+
+        microop = new %(class_name)sMicro(_machInst, 0);
+        microop->setDelayedCommit();
+        this->microops.push_back(microop);
 
         this->microops.front()->setFirstMicroop();
         this->microops.back()->setLastMicroop();
@@ -348,56 +368,10 @@ def template MatrixDecode {{
     return new %(class_name)s(machInst);
 }};
 
-def template MatrixArithDecode {{
+def template MatrixRlenDecode {{
     return new %(class_name)s(machInst, rlen);
 }};
 
-def template MatrixLoadConstructor {{
-    %(class_name)s::%(class_name)s(ExtMachInst _machInst)
-        : %(base_class)s("%(mnemonic)s", _machInst, %(op_class)s)
-    {
-        %(set_reg_idx_arr)s;
-        %(constructor)s;
-
-        StaticInstPtr microop;
-        
-        uint64_t lines = rlen / 4;
-        uint64_t elem_width = 4;
-        uint64_t columns = rlen / elem_width;
-        uint64_t elems = lines * columns;
-
-        for (uint32_t i = 0; i < 64; i++) {
-            microop = new %(class_name)sMicro(_machInst, i);
-            microop->setDelayedCommit();
-            microop->setFlag(IsLoad);
-            this->microops.push_back(microop);
-        }
-
-        this->microops.front()->setFirstMicroop();
-        this->microops.back()->setLastMicroop();
-    }
-}};
-
-def template MatrixStoreConstructor {{
-    %(class_name)s::%(class_name)s(ExtMachInst _machInst)
-        : %(base_class)s("%(mnemonic)s", _machInst, %(op_class)s)
-    {
-        %(set_reg_idx_arr)s;
-        %(constructor)s;
-
-        StaticInstPtr microop;
-        
-        for (uint32_t i = 0; i < 64; i++) {
-            microop = new %(class_name)sMicro(_machInst, i);
-            microop->setDelayedCommit();
-            microop->setFlag(IsStore);
-            this->microops.push_back(microop);
-        }
-
-        this->microops.front()->setFirstMicroop();
-        this->microops.back()->setLastMicroop();
-    }
-}};
 
 def template MatrixLoadMicroConstructor {{
 
@@ -429,6 +403,71 @@ def template MatrixStoreMicroConstructor {{
     setSrcRegIdx(_numSrcRegs++, intRegClass[_machInst.rs1]);
     setSrcRegIdx(_numSrcRegs++, intRegClass[_machInst.rs2]);
     this->flags[IsStore] = true;
+}
+
+}};
+
+
+def template MatrixMoveMicroDeclare {{
+    class %(class_name)s : public %(base_class)s
+    {
+      private:
+        RegId srcRegIdxArr[1];
+        RegId destRegIdxArr[1];
+      public:
+        %(class_name)s(ExtMachInst _machInst);
+        %(class_name)s(ExtMachInst _machInst, uint32_t _microIdx);
+        
+        Fault execute(ExecContext *, trace::InstRecord *) const override;
+
+        using %(base_class)s::generateDisassembly;
+    };
+}};
+
+
+def template MatrixMatrixMoveMicroConstructor {{
+
+%(class_name)s::%(class_name)s(ExtMachInst _machInst, uint32_t _microIdx)
+  : %(base_class)s("%(mnemonic)s", _machInst, %(op_class)s, _microIdx)
+{
+    %(set_reg_idx_arr)s;
+    _numSrcRegs = 0;
+    _numDestRegs = 0;
+    setSrcRegIdx(_numDestRegs++, matRegClass[_machInst.mrd]);
+    _numTypedDestRegs[MatRegClass]++;
+    setSrcRegIdx(_numSrcRegs++, matRegClass[_machInst.mrs1]);
+}
+
+}};
+
+
+def template ScalarMatrixMoveMicroConstructor {{
+
+%(class_name)s::%(class_name)s(ExtMachInst _machInst, uint32_t _microIdx)
+  : %(base_class)s("%(mnemonic)s", _machInst, %(op_class)s, _microIdx)
+{
+    %(set_reg_idx_arr)s;
+    _numSrcRegs = 0;
+    _numDestRegs = 0;
+    setSrcRegIdx(_numDestRegs++, matRegClass[_machInst.mrd]);
+    _numTypedDestRegs[MatRegClass]++;
+    setSrcRegIdx(_numSrcRegs++, intRegClass[_machInst.rs1]);
+}
+
+}};
+
+
+def template FloatMatrixMoveMicroConstructor {{
+
+%(class_name)s::%(class_name)s(ExtMachInst _machInst, uint32_t _microIdx)
+  : %(base_class)s("%(mnemonic)s", _machInst, %(op_class)s, _microIdx)
+{
+    %(set_reg_idx_arr)s;
+    _numSrcRegs = 0;
+    _numDestRegs = 0;
+    setSrcRegIdx(_numDestRegs++, matRegClass[_machInst.mrd]);
+    _numTypedDestRegs[MatRegClass]++;
+    setSrcRegIdx(_numSrcRegs++, floatRegClass[_machInst.fs1]);
 }
 
 }};

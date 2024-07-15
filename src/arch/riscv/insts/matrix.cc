@@ -92,5 +92,23 @@ MatrixUnaryArithMicroInst::generateDisassembly(Addr pc, const loader::SymbolTabl
     return ss.str();
 }
 
+std::string
+MatrixMoveMacroInst::generateDisassembly(Addr pc, const loader::SymbolTable *symtab) const {
+    std::stringstream ss;
+    ss << mnemonic << ' '
+        << registerName(destRegIdx(0)) << ", " 
+        << registerName(srcRegIdx(0));
+    return ss.str();
+}
+
+std::string
+MatrixMoveMicroInst::generateDisassembly(Addr pc, const loader::SymbolTable *symtab) const {
+    std::stringstream ss;
+    ss << mnemonic << ' '
+        << registerName(destRegIdx(0)) << ", " 
+        << registerName(srcRegIdx(0));
+    return ss.str();
+}
+
 } // namespace RiscvISA
 } // namespace gem5

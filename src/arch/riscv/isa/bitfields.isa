@@ -165,8 +165,13 @@ def bitfield SIMM5      uimm_vsetivli;
 def bitfield SIMM3      simm3;
 
 // Matrix instructions
-def bitfield MRD    <11:7>;
-def bitfield MRS1   <19:15>;
-def bitfield MRS2   <24:20>;
-def bitfield MRS3    <11:7>;
-// def bitfield MWIDTH <>;
+def bitfield MRD        mrd;
+def bitfield MRS1       mrs1;
+def bitfield MRS2       mrs2;
+def bitfield MRS3       mrs3;
+
+def bitfield MMINOP     <31:29>;
+def bitfield MMOV       <24:20>;
+def bitfield MFUNCT3    <14:12>;
+def bitfield DT         dt;
+def bitfield MRM        mrm;

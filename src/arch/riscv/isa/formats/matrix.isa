@@ -8,7 +8,9 @@ def setRlenb():
 def MMemBase(name, Name, ea_code, code, base_class,
              mem_flags, inst_flags,
              declare_template_base=MatrixMacroDeclare,
-             decode_template=MatrixDecode, exec_template_base='',
+             decode_template=MatrixRlenDecode, 
+             exec_template_base='',
+             macro_construtor=MatrixMacroConstructor,
              op_class='',
              is_macroop=True):
     iop = InstObjParams(name, Name, base_class, 
@@ -17,10 +19,9 @@ def MMemBase(name, Name, ea_code, code, base_class,
           'op_class': op_class },
           inst_flags)
 
-    constructTemplate = eval(exec_template_base + 'Constructor')
 
     header_output   = declare_template_base.subst(iop)
-    decoder_output  = constructTemplate.subst(iop)
+    decoder_output  = macro_construtor.subst(iop)
     decode_block    = decode_template.subst(iop)
     exec_output     = ''
 
@@ -56,18 +57,17 @@ def MMemBase(name, Name, ea_code, code, base_class,
 def MArithBase(name, Name, code, base_class,
              inst_flags,
              declare_template_base=MatrixMacroDeclare,
-             decode_template=MatrixDecode, exec_template_base='',
-             op_class='',
+             decode_template=MatrixRlenDecode, 
+             exec_template_base='MatrixArith',
+             op_class='OpClass::Matrix',
              is_macroop=True):
     iop = InstObjParams(name, Name, base_class, 
         { 'code': code,
           'op_class': op_class },
           inst_flags)
 
-    constructTemplate = eval(exec_template_base + 'Constructor')
-
     header_output   = declare_template_base.subst(iop)
-    decoder_output  = constructTemplate.subst(iop)
+    decoder_output  = MatrixMacroConstructor.subst(iop)
     decode_block    = decode_template.subst(iop)
     exec_output     = ''
 
@@ -95,10 +95,50 @@ def MArithBase(name, Name, code, base_class,
 
     return (header_output, decoder_output, decode_block, exec_output)
 
+
+def MMoveBase(name, Name, code, base_class,
+             inst_flags,
+             declare_template_base=MatrixMacroDeclare,
+             decode_template=MatrixRlenDecode, 
+             micro_constructor='',
+             macro_construtor=MatrixMacroConstructor,
+             micro_base='MatrixMove',
+             micro_exec=MatrixArithMicroExecute,
+             op_class='OpClass::Matrix',
+             is_macroop=True):
+    iop = InstObjParams(name, Name, base_class, 
+        { 'code': code,
+          'op_class': op_class },
+          inst_flags)
+
+    header_output   = declare_template_base.subst(iop)
+    decoder_output  = macro_construtor.subst(iop)
+    decode_block    = decode_template.subst(iop)
+    exec_output     = ''
+
+    if not is_macroop:
+        return (header_output, decoder_output, decode_block, exec_output)
+
+    micro_class_name = micro_base + 'MicroInst'    
+    microiop = InstObjParams(name + '_micro',
+        Name + 'Micro',
+        micro_class_name,
+        {'code': code, 
+         'set_rlenb': setRlenb(),
+         'set_rlen': setRlen(),
+         'op_class': op_class},
+        inst_flags)
+
+    microDeclTemplate = eval(micro_base + 'MicroDeclare')
+    header_output = microDeclTemplate.subst(microiop) + header_output
+    decoder_output = micro_constructor.subst(microiop) + decoder_output
+    micro_exec_output = micro_exec.subst(microiop)
+    exec_output += micro_exec_output
+
+    return (header_output, decoder_output, decode_block, exec_output)
 }};
 
-// EA = Rs1 + (microIdx // cols) * Rs2 + (microIdx % cols) * sew;
-// mload md, rs2, (rs1)
+
 def format MatrixLoadOp(
     code,
     ea_code={{
@@ -108,11 +148,12 @@ def format MatrixLoadOp(
     *flags
 ) {{
     (header_output, decoder_output, decode_block, exec_output) = \
-        MMemBase(name, Name, ea_code, code, 'MatrixLoadMacroInst', mem_flags, flags, op_class='MemReadOp', exec_template_base='MatrixLoad')
+        MMemBase(name, Name, ea_code, code, 'MatrixLoadMacroInst', 
+                mem_flags, flags, op_class='MemReadOp', 
+                exec_template_base='MatrixLoad')
 }};
 
 
-// mstore md, rs2, (rs1)
 def format MatrixStoreOp(
     code,
     ea_code={{
@@ -122,43 +163,71 @@ def format MatrixStoreOp(
     *flags
 ) {{
     (header_output, decoder_output, decode_block, exec_output) = \
-        MMemBase(name, Name, ea_code, code, 'MatrixStoreMacroInst', mem_flags, flags, op_class='MemWriteOp', exec_template_base='MatrixStore')
+        MMemBase(name, Name, ea_code, code, 'MatrixStoreMacroInst', 
+                 mem_flags, flags, op_class='MemWriteOp', 
+                 exec_template_base='MatrixStore')
 }};
 
 
-// fmmacc md, ms1, ms2 # md = md + ms1 * ms2
 def format MatrixArithLineOp(
     code,
     *flags
 ) {{
     (header_output, decoder_output, decode_block, exec_output) = \
         MArithBase(name, Name, code, 'MatrixArithMacroInst', 
-                   flags, decode_template=MatrixArithDecode, 
-                   op_class='OpClass::Matrix', 
+                   flags,
                    exec_template_base='MatrixArithLine')
 }};
 
 
-// fmmadd
 def format MatrixArithOp(
     code,
     *flags
 ) {{
     (header_output, decoder_output, decode_block, exec_output) = \
         MArithBase(name, Name, code, 'MatrixArithMacroInst', 
-                   flags, decode_template=MatrixArithDecode, 
-                   op_class='OpClass::Matrix', 
-                   exec_template_base='MatrixArith')
+                   flags)
 }};
 
-// mzero md
+
 def format MatrixUnaryArithOp(
     code,
     *flags
 ) {{
     (header_output, decoder_output, decode_block, exec_output) = \
         MArithBase(name, Name, code, 'MatrixUnaryArithMacroInst', 
-                   flags, decode_template=MatrixArithDecode, 
-                   op_class='OpClass::Matrix', 
-                   exec_template_base='MatrixArith')
+                   flags)
+}};
+
+
+def format MatrixMatrixMoveOp(
+    code,
+    *flags
+) {{
+    (header_output, decoder_output, decode_block, exec_output) = \
+        MMoveBase(name, Name, code, 'MatrixMoveMacroInst', 
+                   flags,
+                   micro_constructor=MatrixMatrixMoveMicroConstructor)
+}};
+
+
+def format ScalarMatrixMoveOp(
+    code,
+    *flags
+) {{
+    (header_output, decoder_output, decode_block, exec_output) = \
+        MMoveBase(name, Name, code, 'MatrixMoveMacroInst', 
+                   flags,
+                   micro_constructor=ScalarMatrixMoveMicroConstructor)
+}};
+
+
+def format FloatMatrixMoveOp(
+    code,
+    *flags
+) {{
+    (header_output, decoder_output, decode_block, exec_output) = \
+        MMoveBase(name, Name, code, 'MatrixMoveMacroInst', 
+                   flags,
+                   micro_constructor=FloatMatrixMoveMicroConstructor)
 }};

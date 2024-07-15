@@ -185,12 +185,13 @@ BitUnion64(ExtMachInst)
     Bitfield<19, 15>    mrs1;
     Bitfield<24, 20>    mrs2;
     Bitfield<11,  7>    mrs3;
+    Bitfield<25>        mrm;
+    Bitfield<27, 26>    dt;
 
 EndBitUnion(ExtMachInst)
 
 constexpr unsigned MaxVecLenInBits = 65536;
 constexpr unsigned MaxVecLenInBytes  = MaxVecLenInBits >> 3;
-
 
 } // namespace RiscvISA
 } // namespace gem5
