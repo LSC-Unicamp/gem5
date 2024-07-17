@@ -5106,7 +5106,7 @@ decode QUADRANT default Unknown::unknown() {
                     Mrd_uw[i] = Mem_uw;
                 }});
                 // Row-Strided Store
-                0x3: MatrixStoreOp::mss({{
+                0x5: MatrixStoreOp::mss({{
                     Mem_uw = Mrd_uw[i];
                 }});
             }
