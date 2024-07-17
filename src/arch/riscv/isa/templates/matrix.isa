@@ -433,7 +433,7 @@ def template MatrixMatrixMoveMicroConstructor {{
     %(set_reg_idx_arr)s;
     _numSrcRegs = 0;
     _numDestRegs = 0;
-    setSrcRegIdx(_numDestRegs++, matRegClass[_machInst.mrd]);
+    setDestRegIdx(_numDestRegs++, matRegClass[_machInst.mrd]);
     _numTypedDestRegs[MatRegClass]++;
     setSrcRegIdx(_numSrcRegs++, matRegClass[_machInst.mrs1]);
 }
@@ -449,7 +449,7 @@ def template ScalarMatrixMoveMicroConstructor {{
     %(set_reg_idx_arr)s;
     _numSrcRegs = 0;
     _numDestRegs = 0;
-    setSrcRegIdx(_numDestRegs++, matRegClass[_machInst.mrd]);
+    setDestRegIdx(_numDestRegs++, matRegClass[_machInst.mrd]);
     _numTypedDestRegs[MatRegClass]++;
     setSrcRegIdx(_numSrcRegs++, intRegClass[_machInst.rs1]);
 }
@@ -465,7 +465,7 @@ def template FloatMatrixMoveMicroConstructor {{
     %(set_reg_idx_arr)s;
     _numSrcRegs = 0;
     _numDestRegs = 0;
-    setSrcRegIdx(_numDestRegs++, matRegClass[_machInst.mrd]);
+    setDestRegIdx(_numDestRegs++, matRegClass[_machInst.mrd]);
     _numTypedDestRegs[MatRegClass]++;
     setSrcRegIdx(_numSrcRegs++, floatRegClass[_machInst.fs1]);
 }
