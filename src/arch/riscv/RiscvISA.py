@@ -74,6 +74,19 @@ class RiscvVectorElementLength(UInt32):
             raise TypeError("ELEN is not a power of 2: %d" % self.value)
 
 
+class RiscvMatrixRowLength(UInt32):
+    min = 8
+    max = 65536
+
+    def _check(self):
+        super()._check()
+
+        # RLEN needs to be a whole power of 2. We already know value is
+        # not zero. Hence:
+        if self.value & (self.value - 1) != 0:
+            raise TypeError("RLEN is not a power of 2: %d" % self.value)
+
+
 class RiscvType(Enum):
     vals = ["RV32", "RV64"]
 
@@ -105,6 +118,10 @@ class RiscvISA(BaseISA):
         64,
         "Length of each vector element in bits. \
         ELEN in Ch. 2 of RISC-V vector spec",
+    )
+    rlen = Param.RiscvMatrixRowLength(
+        256,
+        "Length of each matrix register row in bits.",
     )
     privilege_mode_set = Param.PrivilegeModeSet(
         "MSU",

@@ -1,7 +1,7 @@
 let {{
 
 def setRlen():
-    return "uint32_t rlen = RlenbBits >> 3;\n"
+    return "uint32_t rlen = RlenbBits << 3;\n"
 def setRlenb():
     return "uint32_t rlenb = RlenbBits;\n"
 
@@ -142,7 +142,7 @@ def MMoveBase(name, Name, code, base_class,
 def format MatrixLoadOp(
     code,
     ea_code={{
-        EA = Rs1 + ((uint64_t) microIdx / 8) * Rs2 + (microIdx % 8) * 4;
+        EA = Rs1 + ((uint64_t) microIdx / (rlenb / 4)) * Rs2 + (microIdx % (rlenb / 4)) * 4;
     }},
     mem_flags=[],
     *flags
@@ -157,7 +157,7 @@ def format MatrixLoadOp(
 def format MatrixStoreOp(
     code,
     ea_code={{
-        EA = Rs1 + ((uint64_t) microIdx / 8) * Rs2 + (microIdx % 8) * 4;
+        EA = Rs1 + ((uint64_t) microIdx / (rlenb / 4)) * Rs2 + (microIdx % (rlenb / 4)) * 4;
     }},
     mem_flags=[],
     *flags

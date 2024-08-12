@@ -91,9 +91,12 @@ class ISA : public BaseISA
 
     /** Length of each vector element in bits.
      *  ELEN in Ch. 2 of RISC-V vector spec
-    */
+     */
     unsigned elen;
 
+    /** Length of each matrix register row in bits.
+     *
+     */
     unsigned rlen;
 
     /** The combination of privilege modes

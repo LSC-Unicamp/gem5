@@ -264,7 +264,8 @@ RegClass ccRegClass(CCRegClass, CCRegClassName, 0, debug::IntRegs);
 ISA::ISA(const Params &p) : BaseISA(p, "riscv"),
     _rvType(p.riscv_type), enableRvv(p.enable_rvv), vlen(p.vlen), elen(p.elen),
     _privilegeModeSet(p.privilege_mode_set),
-    _wfiResumeOnPending(p.wfi_resume_on_pending), _enableZcd(p.enable_Zcd)
+    _wfiResumeOnPending(p.wfi_resume_on_pending), _enableZcd(p.enable_Zcd),
+    rlen(p.rlen)
 {
     _regClasses.push_back(&intRegClass);
     _regClasses.push_back(&floatRegClass);
@@ -282,6 +283,8 @@ ISA::ISA(const Params &p) : BaseISA(p, "riscv"),
     inform("RVV enabled, VLEN = %d bits, ELEN = %d bits",
             p.vlen, p.elen);
 
+    inform("MPE enabled, RLEN = %d bits",
+            p.rlen);
 
     miscRegFile.resize(NUM_PHYS_MISCREGS);
     clear();
@@ -619,8 +622,8 @@ ISA::readMiscReg(RegIndex idx)
                   (readMiscRegNoEffect(MISCREG_FRM) << FRM_OFFSET);
       case MISCREG_RLENB:
         {
-            // TODO: Get length in bits from a constant
-            return (uint64_t) 256 / 8;
+            auto rpc = tc->pcState().as<PCState>();
+            return rpc.rlenb();
         }
       default:
         // Try reading HPM counters
