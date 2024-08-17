@@ -39,19 +39,21 @@ class MatrixNonSplitInst : public MatrixOp
     MatrixNonSplitInst(const char* mnem, ExtMachInst _machInst,
                     OpClass __opClass)
         : MatrixOp(mnem, _machInst, __opClass)
-    {
-    }
+    {}
 };
 
 class MatrixMacroInst : public RiscvMacroInst
 {
   protected:
     uint64_t rlen;
+    uint64_t microMl;
 
     MatrixMacroInst(const char* mnem, ExtMachInst _machInst,
-                    OpClass __opClass, uint64_t _rlen = 256)
+                    OpClass __opClass, uint64_t _rlen = 256,
+                    uint64_t _microMl = 256)
         : RiscvMacroInst(mnem, _machInst, __opClass),
-        rlen(_rlen)
+        rlen(_rlen),
+        microMl(_microMl)
     {
         this->flags[IsMacroop] = true;
     }
@@ -64,10 +66,13 @@ class MatrixMicroInst : public RiscvMicroInst
 {
   protected:
     uint32_t microIdx;
+    uint64_t microMl;
+
     MatrixMicroInst(const char* mnem, ExtMachInst _machInst,
-                    OpClass __opClass, uint32_t _microIdx)
+                    OpClass __opClass, uint32_t _microIdx, uint64_t _microMl)
         : RiscvMicroInst(mnem, _machInst, __opClass),
-        microIdx(_microIdx)
+        microIdx(_microIdx),
+        microMl(_microMl)
     {
         this->flags[IsMicroop] = true;
     }
@@ -79,19 +84,24 @@ class MatrixMicroInst : public RiscvMicroInst
 class MatrixArithMacroInst : public MatrixMacroInst {
   protected:
     MatrixArithMacroInst(const char* mnem, ExtMachInst _machInst,
-                         OpClass __opClass, uint64_t _rlen = 256)
-        : MatrixMacroInst(mnem, _machInst, __opClass, _rlen)
+                         OpClass __opClass, uint64_t _rlen = 256,
+                         uint64_t _microMl = 256)
+        : MatrixMacroInst(mnem, _machInst, __opClass, _rlen,
+                          _microMl)
     {}
 };
 
 class MatrixArithMicroInst : public MatrixMicroInst {
   protected:
     MatrixArithMicroInst(const char* mnem, ExtMachInst _machInst,
-                         OpClass __opClass, uint32_t _microIdx)
-        : MatrixMicroInst(mnem, _machInst, __opClass, _microIdx)
+                         OpClass __opClass, uint32_t _microIdx,
+                         uint64_t _microMl = 256)
+        : MatrixMicroInst(mnem, _machInst, __opClass, _microIdx,
+                          _microMl)
     {}
 };
 
+// TODO: Unused
 class MatrixUnaryArithMacroInst : public MatrixArithMacroInst {
   protected:
     MatrixUnaryArithMacroInst(const char* mnem, ExtMachInst _machInst,
@@ -119,10 +129,12 @@ class MatrixArithLineMicroInst : public MatrixMicroInst {
     Request::Flags memAccessFlags;
     
     MatrixArithLineMicroInst(const char* mnem, ExtMachInst _machInst,
-                    OpClass __opClass, uint32_t _microIdx)
-        : MatrixMicroInst(mnem, _machInst, __opClass, _microIdx), memAccessFlags(0)
-    {
-    }
+                    OpClass __opClass, uint32_t _microIdx,
+                    uint64_t _microMl = 256)
+        : MatrixMicroInst(mnem, _machInst, __opClass, _microIdx, 
+                          _microMl), 
+          memAccessFlags(0)
+    {}
 
     std::string generateDisassembly(
         Addr pc, const loader::SymbolTable *symtab) const override;
@@ -131,24 +143,30 @@ class MatrixArithLineMicroInst : public MatrixMicroInst {
 class MatrixMemMacroInst : public MatrixMacroInst {
   protected:
     MatrixMemMacroInst(const char* mnem, ExtMachInst _machInst,
-                    OpClass __opClass)
-        : MatrixMacroInst(mnem, _machInst, __opClass)
+                    OpClass __opClass, uint64_t _rlen, 
+                    uint64_t _microMl)
+        : MatrixMacroInst(mnem, _machInst, __opClass, _rlen, 
+                          _microMl)
     {}
 };
 
 class MatrixMemMicroInst : public MatrixMicroInst {
   protected:
     MatrixMemMicroInst(const char* mnem, ExtMachInst _machInst,
-                    OpClass __opClass, uint32_t _microIdx)
-        : MatrixMicroInst(mnem, _machInst, __opClass, _microIdx)
+                    OpClass __opClass, uint32_t _microIdx,
+                    uint64_t _microMl = 256)
+        : MatrixMicroInst(mnem, _machInst, __opClass, _microIdx,
+                          _microMl)
     {}
 };
 
 class MatrixLoadMacroInst : public MatrixMemMacroInst {
   protected:
     MatrixLoadMacroInst(const char* mnem, ExtMachInst _machInst,
-                    OpClass __opClass, uint64_t _rlen = 256)
-        : MatrixMemMacroInst(mnem, _machInst, __opClass)
+                    OpClass __opClass, uint64_t _rlen = 256, 
+                    uint64_t _microMl = 256)
+        : MatrixMemMacroInst(mnem, _machInst, __opClass, _rlen, 
+                             _microMl)
     {
         this->flags[IsLoad] = true;
     }
@@ -159,8 +177,11 @@ class MatrixLoadMicroInst : public MatrixMicroInst {
     Request::Flags memAccessFlags;
     
     MatrixLoadMicroInst(const char* mnem, ExtMachInst _machInst,
-                    OpClass __opClass, uint32_t _microIdx)
-        : MatrixMicroInst(mnem, _machInst, __opClass, _microIdx), memAccessFlags(0)
+                    OpClass __opClass, uint32_t _microIdx,
+                    uint64_t _microMl = 256)
+        : MatrixMicroInst(mnem, _machInst, __opClass, _microIdx,
+                          _microMl), 
+        memAccessFlags(0)
     {
         this->flags[IsLoad] = true;
     }
@@ -169,8 +190,10 @@ class MatrixLoadMicroInst : public MatrixMicroInst {
 class MatrixStoreMacroInst : public MatrixMemMacroInst {
   protected:
     MatrixStoreMacroInst(const char* mnem, ExtMachInst _machInst,
-                    OpClass __opClass, uint64_t _rlen = 256)
-        : MatrixMemMacroInst(mnem, _machInst, __opClass)
+                    OpClass __opClass, uint64_t _rlen = 256,
+                    uint64_t _microMl = 256)
+        : MatrixMemMacroInst(mnem, _machInst, __opClass, _rlen,
+                            _microMl)
     {
         this->flags[IsStore] = true;
     }
@@ -184,8 +207,11 @@ class MatrixStoreMicroInst : public MatrixMicroInst {
     Request::Flags memAccessFlags;
     
     MatrixStoreMicroInst(const char* mnem, ExtMachInst _machInst,
-                    OpClass __opClass, uint32_t _microIdx)
-        : MatrixMicroInst(mnem, _machInst, __opClass, _microIdx), memAccessFlags(0)
+                    OpClass __opClass, uint32_t _microIdx,
+                    uint64_t _microMl = 256)
+        : MatrixMicroInst(mnem, _machInst, __opClass, _microIdx,
+                          _microMl), 
+        memAccessFlags(0)
     {
         this->flags[IsStore] = true;
     }
@@ -197,8 +223,10 @@ class MatrixStoreMicroInst : public MatrixMicroInst {
 class MatrixMoveMacroInst : public MatrixMacroInst {
   protected:
     MatrixMoveMacroInst(const char* mnem, ExtMachInst _machInst,
-                         OpClass __opClass, uint64_t _rlen = 256)
-        : MatrixMacroInst(mnem, _machInst, __opClass, _rlen)
+                         OpClass __opClass, uint64_t _rlen = 256,
+                         uint64_t _microMl = 256)
+        : MatrixMacroInst(mnem, _machInst, __opClass, _rlen, 
+                          _microMl)
     {}
 
     std::string generateDisassembly(
@@ -208,8 +236,10 @@ class MatrixMoveMacroInst : public MatrixMacroInst {
 class MatrixMoveMicroInst : public MatrixMicroInst {
   protected:
     MatrixMoveMicroInst(const char* mnem, ExtMachInst _machInst,
-                         OpClass __opClass, uint32_t _microIdx)
-        : MatrixMicroInst(mnem, _machInst, __opClass, _microIdx)
+                        OpClass __opClass, uint32_t _microIdx,
+                        uint64_t _microMl = 256)
+        : MatrixMicroInst(mnem, _machInst, __opClass, _microIdx,
+                          _microMl)
     {}
 
     std::string generateDisassembly(

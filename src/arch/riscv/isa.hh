@@ -94,10 +94,20 @@ class ISA : public BaseISA
      */
     unsigned elen;
 
-    /** Length of each matrix register row in bits.
-     *
+    /** 
+     *  Length of each matrix register row in bits.
      */
     unsigned rlen;
+
+    /**
+     *  Length of each matrix register in bits.
+     */
+    unsigned mlen;
+
+    /**
+     *  Number o bits each matrix microop operates on.
+     */
+    unsigned microml;
 
     /** The combination of privilege modes
      *  in Privilege Levels section of RISC-V privileged spec
@@ -189,6 +199,10 @@ class ISA : public BaseISA
     unsigned getVecElemLenInBits() { return elen; }
 
     int64_t getVectorLengthInBytes() const override { return vlen >> 3; }
+
+    unsigned getMlen() { return mlen; }
+
+    unsigned getMicroMatrixLength() { return microml; }
 
     unsigned getRLenInBits() { return rlen; }
     unsigned getRLenInBytes() { return rlen >> 3; }
