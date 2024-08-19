@@ -38,26 +38,22 @@ def template MatrixMacroConstructor {{
 }};
 
 
-def template MatrixMacroMemConstructor {{
-    %(class_name)s::%(class_name)s(ExtMachInst _machInst, uint64_t _rlen)
-        : %(base_class)s("%(mnemonic)s", _machInst, %(op_class)s)
+def template MatrixMacroNewConstructor {{
+    %(class_name)s::%(class_name)s(ExtMachInst _machInst, uint64_t _rlen, uint64_t _microml)
+        : %(base_class)s("%(mnemonic)s", _machInst, %(op_class)s, _rlen, _microml)
     {
         %(set_reg_idx_arr)s;
         %(constructor)s;
 
         StaticInstPtr microop;
         
-        uint64_t lines = rlen / 32;
-        uint64_t elem_width = 32;
-        uint64_t columns = rlen / elem_width;
-        uint64_t elems = lines * columns;
+        uint32_t i = 0;
 
-        for (uint32_t i = 0; i < elems; i++) {
-            microop = new %(class_name)sMicro(_machInst, i);
-            microop->setDelayedCommit();
-            this->microops.push_back(microop);
-        }
+        microop = new %(class_name)sMicro(_machInst, i, this->microMl);
+        microop->setDelayedCommit();
+        this->microops.push_back(microop);
 
+        // TODO: If microops == 0 then add a MatrixNop
         this->microops.front()->setFirstMicroop();
         this->microops.back()->setLastMicroop();
     }
@@ -205,9 +201,16 @@ def template MatrixArithLineMicroExecute {{
         %(op_rd)s;
         %(set_rlenb)s;
 
+        uint32_t msew = 32;
+        uint32_t rows = rlenb / (msew / 8);
         uint32_t i = microIdx;
-
-        %(code)s;
+        for (int row; row < rows; row++) {
+            int consumed = rows;
+            for(int k = 0; k < consumed; k++) {
+                %(code)s;
+                i++;
+            }
+        }
 
         %(op_wb)s;
         return NoFault;
@@ -260,24 +263,34 @@ def template MatrixLoadMicroExecute {{
         trace::InstRecord *traceData) const
     {
         Addr EA;
+
         %(op_decl)s;
         %(op_rd)s;
         %(set_rlenb)s;
 
-        %(ea_code)s;
-
-        uint32_t mem_size = 4; // TODO: Parametrize memory size
-        const std::vector<bool> byte_enable(mem_size, true);
-        
-        Fault fault = xc->readMem(EA, (uint8_t*) &Mem, mem_size, 
-                                  memAccessFlags, byte_enable);
-
-        if (fault != NoFault)
-            return fault;
-
+        uint32_t msew = 32;
+        uint32_t rows = rlenb / (msew / 8);
         uint32_t i = microIdx;
-        %(code)s;
 
+        for (int row; row < rows; row++) {
+            int consumed = rows;
+
+            EA = Rs1 + ((uint64_t) i / (rlenb / 4)) * Rs2 + (i % (rlenb / 4)) * 4;
+
+            const size_t mem_size = 4 * consumed;
+            std::vector<bool> byte_enable(mem_size, true);
+
+            Fault fault = xc->readMem(EA, (uint8_t*) &Mem, mem_size, 
+                                  memAccessFlags, byte_enable);
+            if (fault != NoFault)
+                return fault;
+
+            for (int k = 0; k < consumed; k++) {
+                Mrd[i + k] = Mem.as<uint32_t>()[k];
+            }
+
+            i += consumed;
+        }
         %(op_wb)s;
         return NoFault;
     }
@@ -295,18 +308,31 @@ def template MatrixStoreMicroExecute {{
         %(op_rd)s;
         %(set_rlenb)s;
 
-        %(ea_code)s;
-
-        const size_t mem_size = 4;
-        std::vector<bool> byte_enable(mem_size, true);
-
+        uint32_t msew = 32;
+        uint32_t rows = rlenb / (msew / 8);
         uint32_t i = microIdx;
-        %(code)s;
 
-        Fault fault;
-        fault = xc->writeMem((uint8_t*) &Mem, mem_size, EA, memAccessFlags,
-                                nullptr, byte_enable);
-        return fault;
+        for (int row; row < rows; row++) {
+            int consumed = rows;
+
+            EA = Rs1 + ((uint64_t) i / (rlenb / 4)) * Rs2 + (i % (rlenb / 4)) * 4;
+
+            const size_t mem_size = 4 * consumed;
+            std::vector<bool> byte_enable(mem_size, true);
+
+            for (int k = 0; k < consumed; k++) {
+                Mem.as<uint32_t>()[k] = Mrd[i + k];
+            }
+
+            Fault fault = xc->writeMem((uint8_t*) &Mem, mem_size, EA, memAccessFlags,
+                                    nullptr, byte_enable);
+
+            if (fault != NoFault)
+                return fault;
+
+            i += consumed;
+        }
+        return NoFault;
     }
 }};
 
@@ -322,7 +348,7 @@ def template MatrixLoadMicroInitiateAcc{{
 
         %(ea_code)s;
 
-        uint32_t mem_size = 4; // TODO: Parametrize memory size
+        uint32_t mem_size = 4;
         const std::vector<bool> byte_enable(mem_size, true);
         
         Fault fault = initiateMemRead(xc, EA, mem_size, memAccessFlags,
@@ -367,9 +393,7 @@ def template MatrixLoadMicroCompleteAcc{{
         %(op_rd)s;
         
         uint32_t i = microIdx;
-        // TODO: Probably error
         memcpy(&Mem, pkt->getPtr<uint8_t>(), pkt->getSize());
-        // memcpy(Mem.as<uint8_t>(), pkt->getPtr<uint8_t>(), pkt->getSize());
 
         %(code)s;
 

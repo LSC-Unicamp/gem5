@@ -5090,32 +5090,32 @@ decode QUADRANT default Unknown::unknown() {
             // Load/Store
             0x1: decode FUNCT3 {
                 // Contiguous Load
-                0x0: MatrixLoadOp::ml({{
-                    Mrd_uw[i] = Mem_uw;
-                }}, ea_code={{
-                    EA = Rs1 + microIdx * 4;
-                }});
+                // 0x0: MatrixLoadOp::ml({{
+                //     Mrd_uw[i] = Mem_uw;
+                // }}, ea_code={{
+                //     EA = Rs1 + microIdx * 4;
+                // }});
                 // Contiguous Store
-                0x1: MatrixStoreOp::ms({{
-                    Mem_uw = Mrd_uw[i];
-                }}, ea_code={{
-                    EA = Rs1 + microIdx * 4;
-                }});
+                // 0x1: MatrixStoreOp::ms({{
+                //     Mem_uw = Mrd_uw[i];
+                // }}, ea_code={{
+                //     EA = Rs1 + microIdx * 4;
+                // }});
                 // Row-Strided Load
                 0x4: MatrixLoadOp::mls({{
-                    Mrd_uw[i] = Mem_uw;
+                    Mrd_uw[i] = Mem_mc.as<uint32_t>()[0];
                 }});
                 // Row-Strided Store
                 0x5: MatrixStoreOp::mss({{
-                    Mem_uw = Mrd_uw[i];
+                    Mem_mc.as<uint32_t>()[0] = Mrd_uw[i];
                 }});
             }
             // Register-Register Movement
             0x2: decode MMOV {
                 // mr[ms1] -> mr[md]
-                0x0: MatrixMatrixMoveOp::mmv_mm({{
-                    Mrd_uw[i] = Mrs1_uw[i];
-                }});
+                // 0x0: MatrixMatrixMoveOp::mmv_mm({{
+                //     Mrd_uw[i] = Mrs1_uw[i];
+                // }});
                 // x[rs1] -> mr[md]
                 0x1: ScalarMatrixMoveOp::mmv_xmu({{
                     Mrd_uw[i] = Rs1_uw;
@@ -5131,9 +5131,9 @@ decode QUADRANT default Unknown::unknown() {
                 //    Mrd_uw[i] = Mrs1_uw[0];
                 //}});
                 // f[rs1] -> mr[md]
-                0x5: FloatMatrixMoveOp::mmv_fmu({{
-                    Mrd_uw[i] = Rs1_uw;
-                }});
+                // 0x5: FloatMatrixMoveOp::mmv_fmu({{
+                //     Mrd_uw[i] = Rs1_uw;
+                // }});
                 // mr[ms1](0,0) -> f[rd]
                 //0x6:
                 // f[rs1] -> mr[md](0,0)
@@ -5143,70 +5143,70 @@ decode QUADRANT default Unknown::unknown() {
             0x3: decode FUNCT3 {
                 // MAC
                 0x0: decode DT {
-                    0x0: MatrixArithLineOp::mmacu({{
-                        uint32_t row = i / 8;
-                        uint32_t col = i % 8;
-                        uint32_t row_stride = 8;
+                    // 0x0: MatrixArithLineOp::mmacu({{
+                    //     uint32_t row = i / 8;
+                    //     uint32_t col = i % 8;
+                    //     uint32_t row_stride = 8;
 
-                        uint32_t acc = Mrs3_uw[i];
+                    //     uint32_t acc = Mrs3_uw[i];
 
-                        for (int j = 0; j < 8; j++) {
-                            acc += Mrs1_uw[row * row_stride + j] * Mrs2_uw[col * row_stride + j];
-                        }
-
-                        Mrd_uw[i] = acc;
-                    }});
-                    0x1: MatrixArithLineOp::mmac({{
-                        uint32_t row = i / 8;
-                        uint32_t col = i % 8;
-                        uint32_t row_stride = 8;
-
-                        int32_t acc = Mrs3_sw[i];
-
-                        for (int j = 0; j < 8; j++) {
-                            acc += Mrs1_sw[row * row_stride + j] * Mrs2_sw[col * row_stride + j];
-                        }
-
-                        Mrd_sw[i] = acc;
-                    }});
+                    //     for (int j = 0; j < 8; j++) {
+                    //         acc += Mrs1_uw[row * row_stride + j] * Mrs2_uw[col * row_stride + j];
+                    //     }
+ 
+                    //     Mrd_uw[i] = acc;
+                    // }});
+                    // 0x1: MatrixArithLineOp::mmac({{
+                    //     uint32_t row = i / 8;
+                    //     uint32_t col = i % 8;
+                    //     uint32_t row_stride = 8;
+ 
+                    //     int32_t acc = Mrs3_sw[i];
+ 
+                    //     for (int j = 0; j < 8; j++) {
+                    //         acc += Mrs1_sw[row * row_stride + j] * Mrs2_sw[col * row_stride + j];
+                    //     }
+ 
+                    //     Mrd_sw[i] = acc;
+                    // }});
                     0x2: MatrixArithLineOp::mmacf({{
                         uint32_t row = i / 8;
                         uint32_t col = i % 8;
-                        uint32_t row_stride = 8;
+                        uint32_t row_stride = 8; // TODO: Update with rlen
 
-                        float acc = Mrs3_sf[i];
+                        float acc = Mrs3_mc->as<float>()[i];
 
                         for (int j = 0; j < 8; j++) {
-                            acc += Mrs1_sf[row * row_stride + j] * Mrs2_sf[col * row_stride + j];
+                            acc += Mrs1_mc->as<float>()[row * row_stride + j] * Mrs2_mc->as<float>()[col * row_stride + j];
                         }
 
                         Mrd_sf[i] = acc;
                     }});
                 }
-                // ADD
-                0x1: decode DT {
-                    0x0: MatrixArithOp::maddu({{
-                        Mrd_uw[i] = Mrs1_uw[i] + Mrs2_uw[i];
-                    }});
-                    0x1: MatrixArithOp::madd({{
-                        Mrd_sw[i] = Mrs1_sw[i] + Mrs2_sw[i];
-                    }});
-                    0x2: MatrixArithOp::maddf({{
-                        Mrd_sf[i] = Mrs1_sf[i] + Mrs2_sf[i];
-                    }});
-                }
-                // SUB
-                0x2: decode DT {
-                    0x0: MatrixArithOp::msubu({{
-                        Mrd_uw[i] = Mrs1_uw[i] - Mrs2_uw[i];
-                    }});
-                    0x1: MatrixArithOp::msub({{
-                        Mrd_sw[i] = Mrs1_sw[i] - Mrs2_sw[i];
-                    }});
-                    0x2: MatrixArithOp::msubf({{
-                        Mrd_sf[i] = Mrs1_sf[i] - Mrs2_sf[i];
-                    }});
-                }
+//                 // ADD
+//                 0x1: decode DT {
+//                     0x0: MatrixArithOp::maddu({{
+//                         Mrd_uw[i] = Mrs1_uw[i] + Mrs2_uw[i];
+//                     }});
+//                     0x1: MatrixArithOp::madd({{
+//                         Mrd_sw[i] = Mrs1_sw[i] + Mrs2_sw[i];
+//                     }});
+//                     0x2: MatrixArithOp::maddf({{
+//                         Mrd_sf[i] = Mrs1_sf[i] + Mrs2_sf[i];
+//                     }});
+//                 }
+//                 // SUB
+//                 0x2: decode DT {
+//                     0x0: MatrixArithOp::msubu({{
+//                         Mrd_uw[i] = Mrs1_uw[i] - Mrs2_uw[i];
+//                     }});
+//                     0x1: MatrixArithOp::msub({{
+//                         Mrd_sw[i] = Mrs1_sw[i] - Mrs2_sw[i];
+//                     }});
+//                     0x2: MatrixArithOp::msubf({{
+//                         Mrd_sf[i] = Mrs1_sf[i] - Mrs2_sf[i];
+//                     }});
+//                 }
             }
         }
 

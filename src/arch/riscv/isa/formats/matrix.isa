@@ -57,7 +57,8 @@ def MMemBase(name, Name, ea_code, code, base_class,
 def MArithBase(name, Name, code, base_class,
              inst_flags,
              declare_template_base=MatrixMacroDeclare,
-             decode_template=MatrixRlenDecode, 
+             decode_template=MatrixRlenDecode,
+             constructor_template=MatrixMacroConstructor,
              exec_template_base='MatrixArith',
              op_class='OpClass::Matrix',
              is_macroop=True):
@@ -67,7 +68,7 @@ def MArithBase(name, Name, code, base_class,
           inst_flags)
 
     header_output   = declare_template_base.subst(iop)
-    decoder_output  = MatrixMacroConstructor.subst(iop)
+    decoder_output  = constructor_template.subst(iop)
     decode_block    = decode_template.subst(iop)
     exec_output     = ''
 
@@ -103,7 +104,7 @@ def MMoveBase(name, Name, code, base_class,
              micro_constructor='',
              macro_construtor=MatrixMacroConstructor,
              micro_base='MatrixMove',
-             micro_exec=MatrixArithMicroExecute,
+             micro_exec=MatrixArithLineMicroExecute,
              op_class='OpClass::Matrix',
              is_macroop=True):
     iop = InstObjParams(name, Name, base_class, 
@@ -139,6 +140,7 @@ def MMoveBase(name, Name, code, base_class,
 }};
 
 
+// TODO: Need to specialize for the contiguous load
 def format MatrixLoadOp(
     code,
     ea_code={{
@@ -149,7 +151,8 @@ def format MatrixLoadOp(
 ) {{
     (header_output, decoder_output, decode_block, exec_output) = \
         MMemBase(name, Name, ea_code, code, 'MatrixLoadMacroInst', 
-                mem_flags, flags, op_class='MemReadOp', 
+                mem_flags, flags, op_class='MemReadOp',
+                macro_construtor=MatrixMacroNewConstructor,
                 exec_template_base='MatrixLoad')
 }};
 
@@ -164,7 +167,8 @@ def format MatrixStoreOp(
 ) {{
     (header_output, decoder_output, decode_block, exec_output) = \
         MMemBase(name, Name, ea_code, code, 'MatrixStoreMacroInst', 
-                 mem_flags, flags, op_class='MemWriteOp', 
+                 mem_flags, flags, op_class='MemWriteOp',
+                 macro_construtor=MatrixMacroNewConstructor,
                  exec_template_base='MatrixStore')
 }};
 
@@ -176,6 +180,7 @@ def format MatrixArithLineOp(
     (header_output, decoder_output, decode_block, exec_output) = \
         MArithBase(name, Name, code, 'MatrixArithMacroInst', 
                    flags,
+                   constructor_template=MatrixMacroNewConstructor,
                    exec_template_base='MatrixArithLine')
 }};
 
@@ -218,6 +223,7 @@ def format ScalarMatrixMoveOp(
     (header_output, decoder_output, decode_block, exec_output) = \
         MMoveBase(name, Name, code, 'MatrixMoveMacroInst', 
                    flags,
+                   macro_construtor=MatrixMacroNewConstructor,
                    micro_constructor=ScalarMatrixMoveMicroConstructor)
 }};
 
