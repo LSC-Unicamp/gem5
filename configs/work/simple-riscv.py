@@ -1,4 +1,5 @@
 import sys
+
 import m5
 from m5.objects import *
 
@@ -42,7 +43,7 @@ binary = os.path.join(
 system.workload = SEWorkload.init_compatible(binary)
 
 process = Process()
-process.cmd = [binary]
+process.cmd = [binary] + sys.argv[2:]
 system.cpu.workload = process
 system.cpu.createThreads()
 
@@ -52,3 +53,6 @@ m5.instantiate()
 print(f"Beginning simulation!")
 exit_event = m5.simulate()
 print(f"Exiting @ tick {m5.curTick()} because {exit_event.getCause()}")
+
+exit(exit_event.getCode())
+
