@@ -44,6 +44,7 @@
 
 #include "arch/generic/pcstate.hh"
 #include "arch/riscv/regs/vector.hh"
+#include "arch/riscv/regs/matrix.hh"
 #include "enums/PrivilegeModeSet.hh"
 #include "enums/RiscvType.hh"
 
