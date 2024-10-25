@@ -95,6 +95,11 @@ def operands {{
     'Vs2': VecRegOp('vc', 'VS2', 'IsVector', 3),
     'Vs3': VecRegOp('vc', 'VS3', 'IsVector', 4),
 
+    'Mrd':  MatRegOp('mc', 'MRD',  'IsMatrix', 1),
+    'Mrs1': MatRegOp('mc', 'MRS1', 'IsMatrix', 2),
+    'Mrs2': MatRegOp('mc', 'MRS2', 'IsMatrix', 3),
+    'Mrs3': MatRegOp('mc', 'MRS3', 'IsMatrix', 4),
+    
 #Memory Operand
     'Mem': MemOp('ud', None, (None, 'IsLoad', 'IsStore'), 5),
 

@@ -159,3 +159,11 @@ def bitfield BIT31      bit31;
 def bitfield BIT30      bit30;
 def bitfield SIMM5      uimm_vsetivli;
 def bitfield SIMM3      simm3;
+
+// Matrix instructions
+def bitfield MMINOP     <31:29>;
+
+def bitfield MRD        mrd;
+def bitfield MRS1       mrs1;
+def bitfield MRS2       mrs2;
+def bitfield MRS3       mrs3;
