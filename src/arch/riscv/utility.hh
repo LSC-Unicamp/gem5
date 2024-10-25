@@ -160,6 +160,13 @@ registerName(RegId reg)
             return str.str();
         }
         return VecRegNames[reg.index()];
+    } else if (reg.is(MatRegClass)) {
+        if (reg.index() >= NumMatrixRegs) {
+            std::stringstream str;
+            str << "?? (m" << reg.index() << ')';
+            return str.str();
+        }
+        return MatrixRegNames[reg.index()];
     } else  {
         /* It must be an InvalidRegClass, in RISC-V we should treat it as a
          * zero register for the disassembler to work correctly.

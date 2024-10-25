@@ -305,6 +305,13 @@ ISA::copyRegsFrom(ThreadContext *src)
         tc->setReg(id, &vc);
     }
 
+    // Fourth loop through the matrix registers.
+    RiscvISA::MatRegContainer mc;
+    for (auto &id: matRegClass) {
+        src->getReg(id, &mc);
+        tc->setReg(id, &mc);
+    }
+    
     // Copying Misc Regs
     for (int i = 0; i < NUM_PHYS_MISCREGS; i++)
         tc->setMiscRegNoEffect(i, src->readMiscRegNoEffect(i));

@@ -446,18 +446,27 @@ class MatRegOperand(RegOperand):
 
     def __init__(self, parser, full_name, ext, is_src, is_dest):
         super().__init__(parser, full_name, ext, is_src, is_dest)
+        self.elemExt = None
 
     def makeDecl(self):
         return ""
 
     def makeReadW(self):
+        tmp_name = f"tmp_d{self.dest_reg_idx}"
         c_readw = (
-            f"\t\tauto &tmp_d{self.dest_reg_idx} = \n"
+            f"\t\tauto &{tmp_name} = \n"
             f"\t\t    *({self.parser.namespace}::MatRegContainer *)\n"
             f"\t\t    xc->getWritableRegOperand(this, \n"
             f"\t\t        {self.dest_reg_idx});\n"
-            f"\t\tauto &{self.base_name} = tmp_d{self.dest_reg_idx};\n"
         )
+        if self.elemExt:
+            ext = f"{self.parser.operandTypeMap[self.elemExt]}"
+            c_readw += f"\t\tauto {self.base_name} = {tmp_name}.as<{ext}>();\n"
+        elif self.ext:
+            ext = f"{self.parser.operandTypeMap[self.ext]}"
+            c_readw += f"\t\tauto {self.base_name} = {tmp_name}.as<{ext}>();\n"
+        else:
+            c_readw += f"\t\tauto &{self.base_name} = {tmp_name};\n"
 
         return c_readw
 
@@ -465,14 +474,20 @@ class MatRegOperand(RegOperand):
         name = self.base_name
         if self.is_dest and self.is_src:
             name += "_merger"
+        tmp_name = f"tmp_s{self.src_reg_idx}"
+        
 
         c_read = (
             f"\t\t{self.parser.namespace}::MatRegContainer "
-            f"\t\t        tmp_s{self.src_reg_idx};\n"
+            f"\t\t        {tmp_name};\n"
             f"\t\txc->getRegOperand(this, {self.src_reg_idx},\n"
-            f"\t\t        &tmp_s{self.src_reg_idx});\n"
-            f"\t\tauto &{name} = tmp_s{self.src_reg_idx};\n"
+            f"\t\t        &{tmp_name});\n"
         )
+        if self.ext:
+            ext = f"{self.parser.operandTypeMap[self.ext]}"
+            c_read += f"\t\tauto {self.base_name} = {tmp_name}.as<{ext}>();\n"
+        else:
+            c_read += f"\t\tauto {self.base_name} = {tmp_name};\n"
 
         # The following is required due to the way that the O3 CPU
         # works. The ZA register is seen as two physical registers; one
