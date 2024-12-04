@@ -67,6 +67,16 @@ MatrixStoreMicroInst::generateDisassembly(Addr pc, const loader::SymbolTable *sy
 }
 
 std::string
+MatrixStridedStoreMicroInst::generateDisassembly(Addr pc, const loader::SymbolTable *symtab) const {
+    std::stringstream ss;
+    ss << mnemonic << ' '
+        << registerName(srcRegIdx(0)) << ", " 
+        << registerName(srcRegIdx(1)) << ", " 
+        << registerName(srcRegIdx(2));
+    return ss.str();
+}
+
+std::string
 MatrixArithLineMicroInst::generateDisassembly(Addr pc, const loader::SymbolTable *symtab) const {
     std::stringstream ss;
     ss << mnemonic << ' '

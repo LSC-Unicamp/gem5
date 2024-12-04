@@ -141,11 +141,10 @@ def MMoveBase(name, Name, code, base_class,
 }};
 
 
-// TODO: Need to specialize for the contiguous load
 def format MatrixLoadOp(
     code,
     ea_code={{
-        EA = Rs1 + ((uint64_t) microIdx / (rlenb / 4)) * Rs2 + (microIdx % (rlenb / 4)) * 4;
+        EA = Rs1;
     }},
     mem_flags=[],
     *flags
@@ -155,6 +154,22 @@ def format MatrixLoadOp(
                 mem_flags, flags, op_class='MatrixLoadOp',
                 macro_construtor=MatrixMacroConstructor,
                 exec_template_base='MatrixLoad')
+}};
+
+
+def format MatrixStridedLoadOp(
+    code,
+    ea_code={{
+        EA = Rs1;
+    }},
+    mem_flags=[],
+    *flags
+) {{
+    (header_output, decoder_output, decode_block, exec_output) = \
+        MMemBase(name, Name, ea_code, code, 'MatrixLoadMacroInst', 
+                mem_flags, flags, op_class='MatrixLoadOp',
+                macro_construtor=MatrixMacroSplitConstructor,
+                exec_template_base='MatrixStridedLoad')
 }};
 
 
@@ -171,6 +186,22 @@ def format MatrixStoreOp(
                  mem_flags, flags, op_class='MatrixStoreOp',
                  macro_construtor=MatrixMacroConstructor,
                  exec_template_base='MatrixStore')
+}};
+
+
+def format MatrixStridedStoreOp(
+    code,
+    ea_code={{
+        EA = Rs1 + ((uint64_t) microIdx / (rlenb / 4)) * Rs2 + (microIdx % (rlenb / 4)) * 4;
+    }},
+    mem_flags=[],
+    *flags
+) {{
+    (header_output, decoder_output, decode_block, exec_output) = \
+        MMemBase(name, Name, ea_code, code, 'MatrixStoreMacroInst', 
+                 mem_flags, flags, op_class='MatrixStoreOp',
+                 macro_construtor=MatrixMacroSplitConstructor,
+                 exec_template_base='MatrixStridedStore')
 }};
 
 

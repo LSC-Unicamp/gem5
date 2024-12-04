@@ -5090,24 +5090,24 @@ decode QUADRANT default Unknown::unknown() {
             // Load/Store
             0x1: decode FUNCT3 {
                 // Contiguous Load
-                // 0x0: MatrixLoadOp::ml({{
-                //     Mrd_uw[i] = Mem_uw;
-                // }}, ea_code={{
-                //     EA = Rs1 + microIdx * 4;
-                // }});
-                // Contiguous Store
-                // 0x1: MatrixStoreOp::ms({{
-                //     Mem_uw = Mrd_uw[i];
-                // }}, ea_code={{
-                //     EA = Rs1 + microIdx * 4;
-                // }});
-                // Row-Strided Load
-                0x4: MatrixLoadOp::mls({{
+                0x0: MatrixLoadOp::ml({{
                     Mrd_uw[i] = Mem_mc.as<uint32_t>()[0];
                 }});
+                // Contiguous Store
+                0x1: MatrixStoreOp::ms({{
+                    Mem_mc.as<uint32_t>()[k] = Mrd_uw[k];
+                }});
+                // Row-Strided Load
+                0x4: MatrixStridedLoadOp::mls({{
+                    Mrd_uw[i] = Mem_mc.as<uint32_t>()[0] + Mrs3_uw[i];
+                }}, ea_code={{
+                    EA = Rs1 + ((uint64_t) i / (rlenb / 4)) * Rs2 + (i % (rlenb / 4)) * 4;
+                }});
                 // Row-Strided Store
-                0x5: MatrixStoreOp::mss({{
+                0x5: MatrixStridedStoreOp::mss({{
                     Mem_mc.as<uint32_t>()[0] = Mrd_uw[i];
+                }}, ea_code={{
+                    EA = Rs1 + ((uint64_t) i / (rlenb / 4)) * Rs2 + (i % (rlenb / 4)) * 4;
                 }});
             }
             // Register-Register Movement
@@ -5170,13 +5170,13 @@ decode QUADRANT default Unknown::unknown() {
                     //     Mrd_sw[i] = acc;
                     // }});
                     0x2: MatrixArithLineOp::mmacf({{
-                        uint32_t row = i / 8;
-                        uint32_t col = i % 8;
-                        uint32_t row_stride = 8; // TODO: Update with rlen
+                        uint32_t row = i / 4;
+                        uint32_t col = i % 4;
+                        uint32_t row_stride = 4; // TODO: Update with rlen
 
                         float acc = Mrs3_mc->as<float>()[i];
 
-                        for (int j = 0; j < 8; j++) {
+                        for (int j = 0; j < 4; j++) {
                             acc += Mrs1_mc->as<float>()[row * row_stride + j] * Mrs2_mc->as<float>()[col * row_stride + j];
                         }
 
