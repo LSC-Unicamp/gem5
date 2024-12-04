@@ -116,6 +116,12 @@ class OpClass(Enum):
         "SimdExt",
         "SimdFloatExt",
         "SimdConfig",
+        "MatrixLoad",
+        "MatrixStore",
+        "MatrixMultiply",
+        "MatrixMatrixMove",
+        "MatrixScalarMove",
+        "MatrixFloatMove",
     ]
 
 

@@ -133,6 +133,12 @@ static const OpClass SimdExtOp = enums::SimdExt;
 static const OpClass SimdFloatExtOp = enums::SimdFloatExt;
 static const OpClass SimdConfigOp = enums::SimdConfig;
 static const OpClass Num_OpClasses = enums::Num_OpClass;
+static const OpClass MatrixLoadOp = enums::MatrixLoad;
+static const OpClass MatrixStoreOp = enums::MatrixStore;
+static const OpClass MatrixMultiplyOp = enums::MatrixMultiply;
+static const OpClass MatrixMatrixMoveOp = enums::MatrixMatrixMove;
+static const OpClass MatrixFloatMoveOp = enums::MatrixFloatMove;
+static const OpClass MatrixScalarMoveOp = enums::MatrixScalarMove;
 
 } // namespace gem5
 

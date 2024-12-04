@@ -161,6 +161,9 @@ printRegName(std::ostream &os, const RegId& reg)
       case IntRegClass:
         os << 'r' << reg.index();
         break;
+      case MatRegClass:
+        os << 'm' << reg.index();
+        break;
       case CCRegClass:
         os << 'c' << reg.index();
         break;
