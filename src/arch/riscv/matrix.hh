@@ -24,7 +24,7 @@ class MatStore
 {
     // static_assert(MLEN > 0, "MLEN size must be bigger than 0");
 
-    static constexpr size_t RLEN = 256; // in bits
+    static constexpr size_t RLEN = 128; // in bits
     static constexpr size_t LINES = RLEN / 32;
 
     static constexpr size_t LINEAR_SIZE = (RLEN * RLEN / 32) / 8;

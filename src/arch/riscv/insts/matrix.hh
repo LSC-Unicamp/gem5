@@ -49,7 +49,7 @@ class MatrixMacroInst : public RiscvMacroInst
     uint64_t microMl;
 
     MatrixMacroInst(const char* mnem, ExtMachInst _machInst,
-                    OpClass __opClass, uint64_t _rlen = 256,
+                    OpClass __opClass, uint64_t _rlen = 128,
                     uint64_t _microMl = 256)
         : RiscvMacroInst(mnem, _machInst, __opClass),
         rlen(_rlen),
@@ -84,7 +84,7 @@ class MatrixMicroInst : public RiscvMicroInst
 class MatrixArithMacroInst : public MatrixMacroInst {
   protected:
     MatrixArithMacroInst(const char* mnem, ExtMachInst _machInst,
-                         OpClass __opClass, uint64_t _rlen = 256,
+                         OpClass __opClass, uint64_t _rlen = 128,
                          uint64_t _microMl = 256)
         : MatrixMacroInst(mnem, _machInst, __opClass, _rlen,
                           _microMl)
@@ -105,7 +105,7 @@ class MatrixArithMicroInst : public MatrixMicroInst {
 class MatrixUnaryArithMacroInst : public MatrixArithMacroInst {
   protected:
     MatrixUnaryArithMacroInst(const char* mnem, ExtMachInst _machInst,
-                         OpClass __opClass, uint64_t _rlen = 256)
+                         OpClass __opClass, uint64_t _rlen = 128)
         : MatrixArithMacroInst(mnem, _machInst, __opClass, _rlen)
     {}
 
@@ -163,7 +163,7 @@ class MatrixMemMicroInst : public MatrixMicroInst {
 class MatrixLoadMacroInst : public MatrixMemMacroInst {
   protected:
     MatrixLoadMacroInst(const char* mnem, ExtMachInst _machInst,
-                    OpClass __opClass, uint64_t _rlen = 256, 
+                    OpClass __opClass, uint64_t _rlen = 128, 
                     uint64_t _microMl = 256)
         : MatrixMemMacroInst(mnem, _machInst, __opClass, _rlen, 
                              _microMl)
@@ -190,7 +190,7 @@ class MatrixLoadMicroInst : public MatrixMicroInst {
 class MatrixStoreMacroInst : public MatrixMemMacroInst {
   protected:
     MatrixStoreMacroInst(const char* mnem, ExtMachInst _machInst,
-                    OpClass __opClass, uint64_t _rlen = 256,
+                    OpClass __opClass, uint64_t _rlen = 128,
                     uint64_t _microMl = 256)
         : MatrixMemMacroInst(mnem, _machInst, __opClass, _rlen,
                             _microMl)
@@ -223,7 +223,7 @@ class MatrixStoreMicroInst : public MatrixMicroInst {
 class MatrixMoveMacroInst : public MatrixMacroInst {
   protected:
     MatrixMoveMacroInst(const char* mnem, ExtMachInst _machInst,
-                         OpClass __opClass, uint64_t _rlen = 256,
+                         OpClass __opClass, uint64_t _rlen = 128,
                          uint64_t _microMl = 256)
         : MatrixMacroInst(mnem, _machInst, __opClass, _rlen, 
                           _microMl)
