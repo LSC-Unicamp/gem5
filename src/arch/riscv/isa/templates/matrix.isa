@@ -478,8 +478,7 @@ def template MatrixStridedStoreMicroInitiateAcc{{
         float* dest = (float*) ((void*) Mrd);
 
         for (int k = 0; k < 4; k++) {
-            int index = i * 4 + k;
-            Mem.as<float>()[k] = Mrd[i * 4 + k];
+            Mem.as<uint32_t>()[k] = Mrd[i * 4 + k];
         }
 
         Fault fault = xc->writeMem((uint8_t*) &Mem, mem_size, EA, memAccessFlags,
@@ -499,9 +498,7 @@ def template MatrixStridedLoadMicroInitiateAcc{{
 
         uint32_t i = microIdx;
 
-        Addr EA = Rs1 + ((uint64_t) i / (rlenb / 4)) * Rs2 + (i % (rlenb / 4)) * 4;
-
-        // printf("%i %p %p\n", microIdx, (void*) Mrd, (void*) Mrs3);
+        Addr EA = Rs1 + i * Rs2;
 
         const size_t mem_size = 4 * 4;
         std::vector<bool> byte_enable(mem_size, true);
@@ -517,26 +514,29 @@ def template MatrixStridedLoadMicroCompleteAcc{{
     %(class_name)s::completeAcc(PacketPtr pkt, ExecContext *xc,
         trace::InstRecord *traceData) const
     {
-        %(op_decl)s;
-        %(op_rd)s;
-        %(set_rlenb)s;
+        %(op_decl)s
+        %(op_rd)s
+        %(set_rlenb)s
 
         uint32_t i = microIdx;
-
-        printf("%i %p %p\n", microIdx, (void*) Mrd, (void*) Mrs3);
 
         const size_t mem_size = 4 * 4;
         std::vector<bool> byte_enable(mem_size, true);
 
         memcpy(Mem.as<uint8_t>(), pkt->getPtr<uint8_t>(), pkt->getSize());
         
-        for (int k = 0; k < 4; k++) {
-            printf("%i %f ", i * 4 + k, Mem.as<float>()[k]);
-            Mrd[k + i * 4] = 5; // Mem.as<uint32_t>()[k];
+        // Copy Mrs3 data to Mrd
+        for (int j = 0; j < 4; j++) {
+            for (int k = 0; k < 4; k++) {
+                Mrd[k + j * 4] = Mrs3[k + j * 4];
+            }
         }
-        printf("\n");
 
-        %(op_wb)s;
+        for (int k = 0; k < 4; k++) {
+            Mrd[k + i * 4] = Mem.as<uint32_t>()[k];
+        }
+
+        %(op_wb)s
         return NoFault;
     }
 }};
