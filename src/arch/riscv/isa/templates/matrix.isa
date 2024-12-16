@@ -170,7 +170,7 @@ def template MatrixArithMicroExecute {{
 }};
 
 
-def template MatrixArithLineMicroExecute {{
+def template MatrixMoveMicroExecute {{
     Fault
     %(class_name)s::execute(ExecContext *xc,
         trace::InstRecord *traceData) const
@@ -191,6 +191,32 @@ def template MatrixArithLineMicroExecute {{
         }
 
         %(op_wb)s;
+        return NoFault;
+    }
+}};
+
+def template MatrixArithLineMicroExecute {{
+    Fault
+    %(class_name)s::execute(ExecContext *xc,
+        trace::InstRecord *traceData) const
+    {
+        %(op_decl)s
+        %(op_rd)s
+        %(set_rlenb)s
+
+        for (int row; row < 4; row++) {
+            for(int col = 0; col < 4; col++) {
+                float acc = Mrs3->as<float>()[row * 4 + col];
+
+                for (int j = 0; j < 4; j++) {
+                    acc = (double) (Mrs1->as<float>()[row * 4 + j] * Mrs2->as<float>()[col * 4 + j]) + (double) acc;
+                }
+
+                Mrd[row * 4 + col] = acc;
+            }
+        }
+
+        %(op_wb)s
         return NoFault;
     }
 }};

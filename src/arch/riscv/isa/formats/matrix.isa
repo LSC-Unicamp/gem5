@@ -105,7 +105,7 @@ def MMoveBase(name, Name, code, base_class,
              micro_constructor='',
              macro_construtor=MatrixMacroConstructor,
              micro_base='MatrixMove',
-             micro_exec=MatrixArithLineMicroExecute,
+             micro_exec=MatrixMoveMicroExecute,
              op_class='OpClass::Matrix',
              is_macroop=True):
     iop = InstObjParams(name, Name, base_class, 
