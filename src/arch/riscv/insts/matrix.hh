@@ -185,10 +185,7 @@ class MatrixLoadMicroInst : public MatrixMicroInst {
         memAccessFlags(0)
     {
         this->flags[IsLoad] = true;
-        // this->flags[IsSerializeAfter] = true;
-        // this->flags[IsSerializeBefore] = true;
-        this->flags[IsDelayedCommit] = false;
-        // this->flags[IsSquashAfter] = true;
+        this->flags[IsDelayedCommit] = true;
     }
 };
 
@@ -204,7 +201,7 @@ class MatrixStridedLoadMicroInst : public MatrixMicroInst {
         memAccessFlags(0)
     {
         this->flags[IsLoad] = true;
-        this->flags[IsDelayedCommit] = false;
+        this->flags[IsDelayedCommit] = true;
     }
 };
 
