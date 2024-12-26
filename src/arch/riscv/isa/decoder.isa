@@ -5143,44 +5143,26 @@ decode QUADRANT default Unknown::unknown() {
             0x3: decode FUNCT3 {
                 // MAC
                 0x0: decode DT {
-                    // 0x0: MatrixArithLineOp::mmacu({{
-                    //     uint32_t row = i / 8;
-                    //     uint32_t col = i % 8;
-                    //     uint32_t row_stride = 8;
-
-                    //     uint32_t acc = Mrs3_uw[i];
-
-                    //     for (int j = 0; j < 8; j++) {
-                    //         acc += Mrs1_uw[row * row_stride + j] * Mrs2_uw[col * row_stride + j];
-                    //     }
- 
-                    //     Mrd_uw[i] = acc;
-                    // }});
-                    // 0x1: MatrixArithLineOp::mmac({{
-                    //     uint32_t row = i / 8;
-                    //     uint32_t col = i % 8;
-                    //     uint32_t row_stride = 8;
- 
-                    //     int32_t acc = Mrs3_sw[i];
- 
-                    //     for (int j = 0; j < 8; j++) {
-                    //         acc += Mrs1_sw[row * row_stride + j] * Mrs2_sw[col * row_stride + j];
-                    //     }
- 
-                    //     Mrd_sw[i] = acc;
-                    // }});
-                    0x2: MatrixArithLineOp::mmacf({{
-                        uint32_t row = i / 4;
-                        uint32_t col = i % 4;
-                        uint32_t row_stride = 4; // TODO: Update with rlen
-
-                        float acc = Mrs3_mc->as<float>()[i];
-
+                    0x0: MatrixArithLineOp::mmacu({{
+                        int32_t acc = Mrs3_mc->as<uint32_t>()[row * 4 + col];
                         for (int j = 0; j < 4; j++) {
-                            acc += Mrs1_mc->as<float>()[row * row_stride + j] * Mrs2_mc->as<float>()[col * row_stride + j];
+                            acc += Mrs1_mc->as<uint32_t>()[row * 4 + j] * Mrs2_mc->as<uint32_t>()[col * 4 + j];
                         }
-
-                        Mrd_sf[i] = acc;
+                        Mrd_uw[row * 4 + col] = acc;
+                    }});
+                    0x1: MatrixArithLineOp::mmac({{
+                        int32_t acc = Mrs3_mc->as<int32_t>()[row * 4 + col];
+                        for (int j = 0; j < 4; j++) {
+                            acc += Mrs1_mc->as<int32_t>()[row * 4 + j] * Mrs2_mc->as<int32_t>()[col * 4 + j];
+                        }
+                        Mrd_sw[row * 4 + col] = acc;
+                    }});
+                    0x2: MatrixArithLineOp::mmacf({{
+                        float acc = Mrs3_mc->as<float>()[row * 4 + col];
+                        for (int j = 0; j < 4; j++) {
+                            acc += Mrs1_mc->as<float>()[row * 4 + j] * Mrs2_mc->as<float>()[col * 4 + j];
+                        }
+                        Mrd_sf[row * 4 + col] = acc;
                     }});
                 }
 //                 // ADD
