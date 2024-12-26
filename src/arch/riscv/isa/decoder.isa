@@ -5105,7 +5105,7 @@ decode QUADRANT default Unknown::unknown() {
                 }});
                 // Row-Strided Store
                 0x5: MatrixStridedStoreOp::mss({{
-                    Mem_mc.as<uint32_t>()[0] = Mrd_uw[i];
+                    Mem_mc.as<uint32_t>()[0] = Mrs3_uw[i];
                 }}, ea_code={{
                     EA = Rs1 + ((uint64_t) i / (rlenb / 4)) * Rs2 + (i % (rlenb / 4)) * 4;
                 }});

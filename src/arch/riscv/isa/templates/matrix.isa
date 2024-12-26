@@ -501,10 +501,8 @@ def template MatrixStridedStoreMicroInitiateAcc{{
         const size_t mem_size = 4 * 4;
         std::vector<bool> byte_enable(mem_size, true);
 
-        float* dest = (float*) ((void*) Mrd);
-
         for (int k = 0; k < 4; k++) {
-            Mem.as<uint32_t>()[k] = Mrd[i * 4 + k];
+            Mem.as<uint32_t>()[k] = Mrs3[i * 4 + k];
         }
 
         Fault fault = xc->writeMem((uint8_t*) &Mem, mem_size, EA, memAccessFlags,
@@ -663,9 +661,9 @@ def template MatrixStridedStoreMicroConstructor {{
     %(set_reg_idx_arr)s;
     _numSrcRegs = 0;
     _numDestRegs = 0;
-    setSrcRegIdx(_numSrcRegs++, matRegClass[_machInst.mrd]);
     setSrcRegIdx(_numSrcRegs++, intRegClass[_machInst.rs1]);
     setSrcRegIdx(_numSrcRegs++, intRegClass[_machInst.rs2]);
+    setSrcRegIdx(_numSrcRegs++, matRegClass[_machInst.mrs3]);
     this->flags[IsStore] = true;
 }
 
