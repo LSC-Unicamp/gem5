@@ -127,15 +127,14 @@ class MatrixUnaryArithMicroInst : public MatrixArithMicroInst {
 
 class MatrixArithLineMicroInst : public MatrixMicroInst {
   protected:
-    Request::Flags memAccessFlags;
-
     MatrixArithLineMicroInst(const char* mnem, ExtMachInst _machInst,
                     OpClass __opClass, uint32_t _microIdx,
                     uint64_t _microMl = 256)
         : MatrixMicroInst(mnem, _machInst, __opClass, _microIdx,
-                          _microMl),
-          memAccessFlags(0)
-    {}
+                          _microMl)
+    {
+      this->flags[IsDelayedCommit] = true;
+    }
 
     std::string generateDisassembly(
         Addr pc, const loader::SymbolTable *symtab) const override;
@@ -192,12 +191,12 @@ class MatrixLoadMicroInst : public MatrixMicroInst {
 class MatrixStridedLoadMicroInst : public MatrixMicroInst {
   protected:
     Request::Flags memAccessFlags;
-    
+
     MatrixStridedLoadMicroInst(const char* mnem, ExtMachInst _machInst,
                     OpClass __opClass, uint32_t _microIdx,
                     uint64_t _microMl = 256)
         : MatrixMicroInst(mnem, _machInst, __opClass, _microIdx,
-                          _microMl), 
+                          _microMl),
         memAccessFlags(0)
     {
         this->flags[IsLoad] = true;
@@ -241,12 +240,12 @@ class MatrixStoreMicroInst : public MatrixMicroInst {
 class MatrixStridedStoreMicroInst : public MatrixMicroInst {
   protected:
     Request::Flags memAccessFlags;
-    
+
     MatrixStridedStoreMicroInst(const char* mnem, ExtMachInst _machInst,
                     OpClass __opClass, uint32_t _microIdx,
                     uint64_t _microMl = 256)
         : MatrixMicroInst(mnem, _machInst, __opClass, _microIdx,
-                          _microMl), 
+                          _microMl),
         memAccessFlags(0)
     {
         this->flags[IsStore] = true;
