@@ -69,6 +69,8 @@ IEW::IEW(CPU *_cpu, const BaseO3CPUParams &params)
       cpu(_cpu),
       instQueue(_cpu, this, params),
       ldstQueue(_cpu, this, params),
+      // TODO: Add params for mldst separated from ldst queue
+      mldstQueue(_cpu, this, params, true),
       fuPool(params.fuPool),
       commitToIEWDelay(params.commitToIEWDelay),
       renameToIEWDelay(params.renameToIEWDelay),
@@ -240,6 +242,10 @@ IEW::startupStage()
             ldstQueue.numFreeLoadEntries(tid);
         toRename->iewInfo[tid].freeSQEntries =
             ldstQueue.numFreeStoreEntries(tid);
+        toRename->iewInfo[tid].freeMLQEntries =
+            mldstQueue.numFreeLoadEntries(tid);
+        toRename->iewInfo[tid].freeMSQEntries =
+            mldstQueue.numFreeStoreEntries(tid);
     }
 
     // Initialize the checker's dcache port here
@@ -260,6 +266,8 @@ IEW::clearStates(ThreadID tid)
     toRename->iewInfo[tid].usedLSQ = true;
     toRename->iewInfo[tid].freeLQEntries = ldstQueue.numFreeLoadEntries(tid);
     toRename->iewInfo[tid].freeSQEntries = ldstQueue.numFreeStoreEntries(tid);
+    toRename->iewInfo[tid].freeMLQEntries = mldstQueue.numFreeLoadEntries(tid);
+    toRename->iewInfo[tid].freeMSQEntries = mldstQueue.numFreeStoreEntries(tid);
 }
 
 void
@@ -303,6 +311,7 @@ IEW::setActiveThreads(std::list<ThreadID> *at_ptr)
     activeThreads = at_ptr;
 
     ldstQueue.setActiveThreads(at_ptr);
+    mldstQueue.setActiveThreads(at_ptr);
     instQueue.setActiveThreads(at_ptr);
 }
 
@@ -315,7 +324,7 @@ IEW::setScoreboard(Scoreboard *sb_ptr)
 bool
 IEW::isDrained() const
 {
-    bool drained = ldstQueue.isDrained() && instQueue.isDrained();
+    bool drained = mldstQueue.isDrained() && ldstQueue.isDrained() && instQueue.isDrained();
 
     for (ThreadID tid = 0; tid < numThreads; tid++) {
         if (!insts[tid].empty()) {
@@ -347,6 +356,7 @@ IEW::drainSanityCheck() const
 
     instQueue.drainSanityCheck();
     ldstQueue.drainSanityCheck();
+    mldstQueue.drainSanityCheck();
 }
 
 void
@@ -359,6 +369,7 @@ IEW::takeOverFrom()
 
     instQueue.takeOverFrom();
     ldstQueue.takeOverFrom();
+    mldstQueue.takeOverFrom();
     fuPool->takeOverFrom();
 
     startupStage();
@@ -386,6 +397,7 @@ IEW::squash(ThreadID tid)
 
     // Tell the LDSTQ to start squashing.
     ldstQueue.squash(fromCommit->commitInfo[tid].doneSeqNum, tid);
+    mldstQueue.squash(fromCommit->commitInfo[tid].doneSeqNum, tid);
     updatedQueues = true;
 
     // Clear the skid buffer in case it has any data in it.
@@ -630,7 +642,7 @@ IEW::updateStatus()
     // unblocking, then there is no internal activity for the IEW stage.
     instQueue.iqIOStats.intInstQueueReads++;
     if (_status == Active && !instQueue.hasReadyInsts() &&
-        !ldstQueue.willWB() && !any_unblocking) {
+        !ldstQueue.willWB() && !mldstQueue.willWB() && !any_unblocking) {
         DPRINTF(IEW, "IEW switching to idle\n");
 
         deactivateStage();
@@ -638,6 +650,7 @@ IEW::updateStatus()
         _status = Inactive;
     } else if (_status == Inactive && (instQueue.hasReadyInsts() ||
                                        ldstQueue.willWB() ||
+                                       mldstQueue.willWB() ||
                                        any_unblocking)) {
         // Otherwise there is internal activity.  Set to active.
         DPRINTF(IEW, "IEW switching to active\n");
@@ -915,7 +928,9 @@ IEW::dispatchInsts(ThreadID tid)
         // Check LSQ if inst is LD/ST
         if ((inst->isAtomic() && ldstQueue.sqFull(tid)) ||
             (inst->isLoad() && ldstQueue.lqFull(tid)) ||
-            (inst->isStore() && ldstQueue.sqFull(tid))) {
+            (inst->isStore() && ldstQueue.sqFull(tid)) ||
+            (inst->isLoad() && inst->isMatrix() && mldstQueue.lqFull(tid)) ||
+            (inst->isStore() && inst->isMatrix() && mldstQueue.sqFull(tid))) {
             DPRINTF(IEW, "[tid:%i] Issue: %s has become full.\n",tid,
                     inst->isLoad() ? "LQ" : "SQ");
 
@@ -963,6 +978,34 @@ IEW::dispatchInsts(ThreadID tid)
 
             ++iewStats.dispNonSpecInsts;
 
+            toRename->iewInfo[tid].dispatchedToSQ++;
+        } else if (inst->isMatrix() && inst->isLoad()) {
+            DPRINTF(IEW, "[tid:%i] Issue: Memory instruction "
+                    "encountered, adding to MLSQ.\n", tid);
+
+            // Reserve a spot in the load store queue for this
+            // memory access.
+            mldstQueue.insertLoad(inst);
+
+            // TODO: Maybe create new counter
+            ++iewStats.dispLoadInsts;
+
+            add_to_iq = true;
+
+            // TODO: Maybe create new counter
+            toRename->iewInfo[tid].dispatchedToLQ++;
+        } else if (inst->isMatrix() && inst->isStore()) {
+            DPRINTF(IEW, "[tid:%i] Issue: Memory instruction "
+                    "encountered, adding to MLSQ.\n", tid);
+
+            mldstQueue.insertStore(inst);
+
+            // TODO: Maybe create new counter
+            ++iewStats.dispStoreInsts;
+
+            add_to_iq = true;
+
+            // TODO: Maybe create new counter
             toRename->iewInfo[tid].dispatchedToSQ++;
         } else if (inst->isLoad()) {
             DPRINTF(IEW, "[tid:%i] Issue: Memory instruction "
@@ -1173,7 +1216,10 @@ IEW::executeInsts()
             } else if (inst->isLoad()) {
                 // Loads will mark themselves as executed, and their writeback
                 // event adds the instruction to the queue to commit
-                fault = ldstQueue.executeLoad(inst);
+                if (inst->isMatrix())
+                    fault = mldstQueue.executeLoad(inst);
+                else
+                    fault = ldstQueue.executeLoad(inst);
 
                 if (inst->isTranslationDelayed() &&
                     fault == NoFault) {
@@ -1189,7 +1235,10 @@ IEW::executeInsts()
                     inst->fault = NoFault;
                 }
             } else if (inst->isStore()) {
-                fault = ldstQueue.executeStore(inst);
+                if (inst->isMatrix())
+                    fault = mldstQueue.executeStore(inst);
+                else
+                    fault = ldstQueue.executeStore(inst);
 
                 if (inst->isTranslationDelayed() &&
                     fault == NoFault) {
@@ -1300,6 +1349,28 @@ IEW::executeInsts()
                 squashDueToMemOrder(violator, tid);
 
                 ++iewStats.memOrderViolationEvents;
+            } else if (mldstQueue.violation(tid)) {
+                assert(inst->isMemRef());
+                // If there was an ordering violation, then get the
+                // DynInst that caused the violation.  Note that this
+                // clears the violation signal.
+                DynInstPtr violator;
+                violator = mldstQueue.getMemDepViolator(tid);
+
+                DPRINTF(IEW, "MLDSTQ detected a violation. Violator PC: %s "
+                        "[sn:%lli], inst PC: %s [sn:%lli]. Addr is: %#x.\n",
+                        violator->pcState(), violator->seqNum,
+                        inst->pcState(), inst->seqNum, inst->physEffAddr);
+
+                fetchRedirect[tid] = true;
+
+                // Tell the instruction queue that a violation has occured.
+                instQueue.violation(inst, violator);
+
+                // Squash.
+                squashDueToMemOrder(violator, tid);
+
+                ++iewStats.memOrderViolationEvents;
             }
         } else {
             // Reset any state associated with redirects that will not
@@ -1310,6 +1381,19 @@ IEW::executeInsts()
                 DynInstPtr violator = ldstQueue.getMemDepViolator(tid);
 
                 DPRINTF(IEW, "LDSTQ detected a violation.  Violator PC: "
+                        "%s, inst PC: %s.  Addr is: %#x.\n",
+                        violator->pcState(), inst->pcState(),
+                        inst->physEffAddr);
+                DPRINTF(IEW, "Violation will not be handled because "
+                        "already squashing\n");
+
+                ++iewStats.memOrderViolationEvents;
+            } else if (mldstQueue.violation(tid)) {
+                assert(inst->isMemRef());
+
+                DynInstPtr violator = mldstQueue.getMemDepViolator(tid);
+
+                DPRINTF(IEW, "MLDSTQ detected a violation.  Violator PC: "
                         "%s, inst PC: %s.  Addr is: %#x.\n",
                         violator->pcState(), inst->pcState(),
                         inst->physEffAddr);
@@ -1399,6 +1483,7 @@ IEW::tick()
     updatedQueues = false;
 
     ldstQueue.tick();
+    mldstQueue.tick();
 
     sortInsts();
 
@@ -1444,6 +1529,7 @@ IEW::tick()
 
     // Writeback any stores using any leftover bandwidth.
     ldstQueue.writebackStores();
+    mldstQueue.writebackStores();
 
     // Check the committed load/store signals to see if there's a load
     // or store to commit.  Also check if it's being told to execute a
@@ -1464,6 +1550,10 @@ IEW::tick()
             ldstQueue.commitStores(fromCommit->commitInfo[tid].doneSeqNum,tid);
 
             ldstQueue.commitLoads(fromCommit->commitInfo[tid].doneSeqNum,tid);
+
+            mldstQueue.commitStores(fromCommit->commitInfo[tid].doneSeqNum,tid);
+
+            mldstQueue.commitLoads(fromCommit->commitInfo[tid].doneSeqNum,tid);
 
             updateLSQNextCycle = true;
             instQueue.commit(fromCommit->commitInfo[tid].doneSeqNum,tid);
@@ -1487,6 +1577,8 @@ IEW::tick()
                 instQueue.getCount(tid);
             toFetch->iewInfo[tid].ldstqCount =
                 ldstQueue.getCount(tid);
+            toFetch->iewInfo[tid].mldstqCount =
+                mldstQueue.getCount(tid);
 
             toRename->iewInfo[tid].usedIQ = true;
             toRename->iewInfo[tid].freeIQEntries =
@@ -1497,6 +1589,11 @@ IEW::tick()
                 ldstQueue.numFreeLoadEntries(tid);
             toRename->iewInfo[tid].freeSQEntries =
                 ldstQueue.numFreeStoreEntries(tid);
+
+            toRename->iewInfo[tid].freeMLQEntries =
+                mldstQueue.numFreeLoadEntries(tid);
+            toRename->iewInfo[tid].freeMSQEntries =
+                mldstQueue.numFreeStoreEntries(tid);
 
             wroteToTimeBuffer = true;
         }
@@ -1509,6 +1606,11 @@ IEW::tick()
             "LQ has %i free entries. SQ has %i free entries.\n",
             instQueue.numFreeEntries(), instQueue.hasReadyInsts(),
             ldstQueue.numFreeLoadEntries(), ldstQueue.numFreeStoreEntries());
+
+    DPRINTF(IEW, "IQ has %i free entries (Can schedule: %i).  "
+            "MLQ has %i free entries. MSQ has %i free entries.\n",
+            instQueue.numFreeEntries(), instQueue.hasReadyInsts(),
+            mldstQueue.numFreeLoadEntries(), mldstQueue.numFreeStoreEntries());
 
     updateStatus();
 

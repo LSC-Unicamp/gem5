@@ -218,10 +218,10 @@ class IEW
     void deactivateStage();
 
     /** Returns if the LSQ has any stores to writeback. */
-    bool hasStoresToWB() { return ldstQueue.hasStoresToWB(); }
+    bool hasStoresToWB() { return ldstQueue.hasStoresToWB() || mldstQueue.hasStoresToWB(); }
 
     /** Returns if the LSQ has any stores to writeback. */
-    bool hasStoresToWB(ThreadID tid) { return ldstQueue.hasStoresToWB(tid); }
+    bool hasStoresToWB(ThreadID tid) { return ldstQueue.hasStoresToWB(tid) || mldstQueue.hasStoresToWB(tid); }
 
     /** Check misprediction  */
     void checkMisprediction(const DynInstPtr &inst);
@@ -356,6 +356,9 @@ class IEW
 
     /** Load / store queue. */
     LSQ ldstQueue;
+
+    /** Load / store queue for matrices. */
+    LSQ mldstQueue;
 
     /** Pointer to the functional unit pool. */
     FUPool *fuPool;

@@ -663,6 +663,8 @@ class LSQ
     /** Constructs an LSQ with the given parameters. */
     LSQ(CPU *cpu_ptr, IEW *iew_ptr, const BaseO3CPUParams &params);
 
+    LSQ(CPU *cpu_ptr, IEW *iew_ptr, const BaseO3CPUParams &params, bool matrix);
+
     /** Returns the name of the LSQ. */
     std::string name() const;
 

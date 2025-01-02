@@ -665,6 +665,7 @@ CPU::removeThread(ThreadID tid)
     // queues in the pipeline must be empty.
     assert(iew.instQueue.getCount(tid) == 0);
     assert(iew.ldstQueue.getCount(tid) == 0);
+    assert(iew.mldstQueue.getCount(tid) == 0);
     assert(commit.rob->isEmpty(tid));
 
     // Reset ROB/IQ/LSQ Entries
@@ -1475,6 +1476,24 @@ CPU::htmSendAbortSignal(ThreadID tid, uint64_t htm_uid,
     if (!iew.ldstQueue.getDataPort().sendTimingReq(abort_pkt)) {
         panic("HTM abort signal was not sent to the memory subsystem.");
     }
+}
+
+Port &
+CPU::getPort(const std::string &if_name, PortID idx)
+{
+    // Get the right port based on name. This applies to all the
+    // subclasses of the base CPU and relies on their implementation
+    // of getDataPort and getInstPort.
+    if (if_name == "dcache_port")
+        return getDataPort();
+    else if (if_name == "icache_port")
+        return getInstPort();
+    else if (if_name == "model_reset")
+        return modelResetPort;
+    else if (if_name == "mdcache_port")
+        return getMatrixDataPort();
+    else
+        return ClockedObject::getPort(if_name, idx);
 }
 
 } // namespace o3

@@ -116,6 +116,9 @@ class CPU : public BaseCPU
     /** Overall CPU status. */
     Status _status;
 
+    Port &getPort(const std::string &if_name,
+                  PortID idx=InvalidPortID) override;
+
   private:
 
     /** The tick event used for scheduling CPU ticks. */
@@ -559,6 +562,17 @@ class CPU : public BaseCPU
                 flags, res, std::move(amo_op), byte_enable);
     }
 
+    Fault
+    pushMatrixRequest(const DynInstPtr& inst, bool isLoad, uint8_t *data,
+                unsigned int size, Addr addr, Request::Flags flags,
+                uint64_t *res, AtomicOpFunctorPtr amo_op = nullptr,
+                const std::vector<bool>& byte_enable=std::vector<bool>())
+
+    {
+        return iew.mldstQueue.pushRequest(inst, isLoad, data, size, addr,
+                flags, res, std::move(amo_op), byte_enable);
+    }
+
     /** Used by the fetch unit to get a hold of the instruction port. */
     Port &
     getInstPort() override
@@ -571,6 +585,13 @@ class CPU : public BaseCPU
     getDataPort() override
     {
         return iew.ldstQueue.getDataPort();
+    }
+
+    /** Get the mdcache port (used to find block size for translations). */
+    Port &
+    getMatrixDataPort()
+    {
+        return iew.mldstQueue.getDataPort();
     }
 
     struct CPUStats : public statistics::Group

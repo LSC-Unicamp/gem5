@@ -138,11 +138,14 @@ struct TimeStruct
         unsigned freeIQEntries;
         unsigned freeLQEntries;
         unsigned freeSQEntries;
+        unsigned freeMLQEntries;
+        unsigned freeMSQEntries;
         unsigned dispatchedToLQ;
         unsigned dispatchedToSQ;
 
         unsigned iqCount;
         unsigned ldstqCount;
+        unsigned mldstqCount;
 
         unsigned dispatched;
         bool usedIQ;

@@ -120,6 +120,59 @@ LSQ::LSQ(CPU *cpu_ptr, IEW *iew_ptr, const BaseO3CPUParams &params)
 }
 
 
+
+LSQ::LSQ(CPU *cpu_ptr, IEW *iew_ptr, const BaseO3CPUParams &params, bool matrix)
+    : cpu(cpu_ptr), iewStage(iew_ptr),
+      _cacheBlocked(false),
+      cacheStorePorts(params.cacheStorePorts), usedStorePorts(0),
+      cacheLoadPorts(params.cacheLoadPorts), usedLoadPorts(0),
+      waitingForStaleTranslation(false),
+      staleTranslationWaitTxnId(0),
+      lsqPolicy(params.smtLSQPolicy),
+      LQEntries(params.LQEntries),
+      SQEntries(params.SQEntries),
+      maxLQEntries(maxLSQAllocation(lsqPolicy, LQEntries, params.numThreads,
+                  params.smtLSQThreshold)),
+      maxSQEntries(maxLSQAllocation(lsqPolicy, SQEntries, params.numThreads,
+                  params.smtLSQThreshold)),
+      dcachePort(this, cpu_ptr),
+      numThreads(params.numThreads)
+{
+    assert(numThreads > 0 && numThreads <= MaxThreads);
+
+    //**********************************************
+    //************ Handle SMT Parameters ***********
+    //**********************************************
+
+    /* Run SMT olicy checks. */
+        if (lsqPolicy == SMTQueuePolicy::Dynamic) {
+        DPRINTF(LSQ, "LSQ sharing policy set to Dynamic\n");
+    } else if (lsqPolicy == SMTQueuePolicy::Partitioned) {
+        DPRINTF(Fetch, "LSQ sharing policy set to Partitioned: "
+                "%i entries per LQ | %i entries per SQ\n",
+                maxLQEntries,maxSQEntries);
+    } else if (lsqPolicy == SMTQueuePolicy::Threshold) {
+
+        assert(params.smtLSQThreshold > params.LQEntries);
+        assert(params.smtLSQThreshold > params.SQEntries);
+
+        DPRINTF(LSQ, "LSQ sharing policy set to Threshold: "
+                "%i entries per LQ | %i entries per SQ\n",
+                maxLQEntries,maxSQEntries);
+    } else {
+        panic("Invalid LSQ sharing policy. Options are: Dynamic, "
+                    "Partitioned, Threshold");
+    }
+
+    thread.reserve(numThreads);
+    for (ThreadID tid = 0; tid < numThreads; tid++) {
+        thread.emplace_back(maxLQEntries, maxSQEntries);
+        thread[tid].init(cpu, iew_ptr, params, this, tid, true);
+        thread[tid].setDcachePort(&dcachePort);
+    }
+}
+
+
 std::string
 LSQ::name() const
 {

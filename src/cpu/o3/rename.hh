@@ -397,6 +397,8 @@ class Rename
         unsigned robEntries;
         unsigned lqEntries;
         unsigned sqEntries;
+        unsigned mlqEntries;
+        unsigned msqEntries;
     };
 
     /** Per-thread tracking of the number of free entries of back-end

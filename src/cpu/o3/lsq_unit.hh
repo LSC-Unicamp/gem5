@@ -225,6 +225,10 @@ class LSQUnit
     void init(CPU *cpu_ptr, IEW *iew_ptr, const BaseO3CPUParams &params,
             LSQ *lsq_ptr, unsigned id);
 
+    /** Initializes the LSQ unit with the specified number of entries. */
+    void init(CPU *cpu_ptr, IEW *iew_ptr, const BaseO3CPUParams &params,
+            LSQ *lsq_ptr, unsigned id, bool matrix);
+
     /** Returns the name of the LSQ unit. */
     std::string name() const;
 

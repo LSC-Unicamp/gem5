@@ -221,6 +221,28 @@ LSQUnit::init(CPU *cpu_ptr, IEW *iew_ptr, const BaseO3CPUParams &params,
     resetState();
 }
 
+void
+LSQUnit::init(CPU *cpu_ptr, IEW *iew_ptr, const BaseO3CPUParams &params,
+        LSQ *lsq_ptr, unsigned id, bool matrix)
+{
+    lsqID = id;
+
+    cpu = cpu_ptr;
+    iewStage = iew_ptr;
+
+    lsq = lsq_ptr;
+
+    cpu->addStatGroup(csprintf("mlsq%i", lsqID).c_str(), &stats);
+
+    DPRINTF(LSQUnit, "Creating MLSQUnit%i object.\n",lsqID);
+
+    depCheckShift = params.LSQDepCheckShift;
+    checkLoads = params.LSQCheckLoads;
+    needsTSO = params.needsTSO;
+
+    resetState();
+}
+
 
 void
 LSQUnit::resetState()

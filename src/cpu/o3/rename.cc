@@ -234,6 +234,8 @@ Rename::clearStates(ThreadID tid)
     freeEntries[tid].iqEntries = iew_ptr->instQueue.numFreeEntries(tid);
     freeEntries[tid].lqEntries = iew_ptr->ldstQueue.numFreeLoadEntries(tid);
     freeEntries[tid].sqEntries = iew_ptr->ldstQueue.numFreeStoreEntries(tid);
+    freeEntries[tid].mlqEntries = iew_ptr->mldstQueue.numFreeLoadEntries(tid);
+    freeEntries[tid].msqEntries = iew_ptr->mldstQueue.numFreeStoreEntries(tid);
     freeEntries[tid].robEntries = commit_ptr->numROBFreeEntries(tid);
     emptyROB[tid] = true;
 
@@ -264,6 +266,10 @@ Rename::resetStage()
             iew_ptr->ldstQueue.numFreeLoadEntries(tid);
         freeEntries[tid].sqEntries =
             iew_ptr->ldstQueue.numFreeStoreEntries(tid);
+        freeEntries[tid].mlqEntries =
+            iew_ptr->mldstQueue.numFreeLoadEntries(tid);
+        freeEntries[tid].msqEntries =
+            iew_ptr->mldstQueue.numFreeStoreEntries(tid);
         freeEntries[tid].robEntries = commit_ptr->numROBFreeEntries(tid);
         emptyROB[tid] = true;
 
