@@ -266,6 +266,12 @@ class Rename
     /** Calculates the number of free SQ entries for a specific thread. */
     int calcFreeSQEntries(ThreadID tid);
 
+    /** Calculates the number of free LQ entries for a specific thread. */
+    int calcFreeMLQEntries(ThreadID tid);
+
+    /** Calculates the number of free SQ entries for a specific thread. */
+    int calcFreeMSQEntries(ThreadID tid);
+
     /** Returns the number of valid instructions coming from decode. */
     unsigned validInsts();
 
@@ -473,6 +479,8 @@ class Rename
         IQ,
         LQ,
         SQ,
+        MLQ,
+        MSQ,
         NONE
     };
 

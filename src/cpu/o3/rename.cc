@@ -615,7 +615,17 @@ Rename::renameInsts(ThreadID tid)
         //For store instruction, check SQ size and take into account the
         //inflight stores
 
-        if (inst->isLoad()) {
+        // Need to specialize for Matrix operations
+
+        if (inst->isLoad() && inst->isMatrix()) {
+            if (calcFreeMLQEntries(tid) <= 0) {
+                DPRINTF(Rename, "[tid:%i] Cannot rename due to no free MLQ\n",
+                        tid);
+                source = MLQ;
+                incrFullStat(source);
+                break;
+            }
+        } else if (inst->isLoad()) {
             if (calcFreeLQEntries(tid) <= 0) {
                 DPRINTF(Rename, "[tid:%i] Cannot rename due to no free LQ\n",
                         tid);
@@ -625,7 +635,15 @@ Rename::renameInsts(ThreadID tid)
             }
         }
 
-        if (inst->isStore() || inst->isAtomic()) {
+        if (inst->isStore() && inst->isMatrix()) {
+            if (calcFreeMSQEntries(tid) <= 0) {
+                DPRINTF(Rename, "[tid:%i] Cannot rename due to no free MSQ\n",
+                        tid);
+                source = MSQ;
+                incrFullStat(source);
+                break;
+            }
+        } else if (inst->isStore() || inst->isAtomic()) {
             if (calcFreeSQEntries(tid) <= 0) {
                 DPRINTF(Rename, "[tid:%i] Cannot rename due to no free SQ\n",
                         tid);
@@ -1182,6 +1200,31 @@ Rename::calcFreeSQEntries(ThreadID tid)
         int num_free = freeEntries[tid].sqEntries -
             (storesInProgress[tid] - fromIEW->iewInfo[tid].dispatchedToSQ);
         DPRINTF(Rename, "calcFreeSQEntries: free sqEntries: %d, "
+                "storesInProgress: %d, stores dispatchedToSQ: %d\n",
+                freeEntries[tid].sqEntries, storesInProgress[tid],
+                fromIEW->iewInfo[tid].dispatchedToSQ);
+        return num_free;
+}
+
+int
+Rename::calcFreeMLQEntries(ThreadID tid)
+{
+        int num_free = freeEntries[tid].mlqEntries -
+            (loadsInProgress[tid] - fromIEW->iewInfo[tid].dispatchedToLQ);
+        DPRINTF(Rename,
+                "calcFreeMLQEntries: free lqEntries: %d, loadsInProgress: %d, "
+                "loads dispatchedToLQ: %d\n",
+                freeEntries[tid].lqEntries, loadsInProgress[tid],
+                fromIEW->iewInfo[tid].dispatchedToLQ);
+        return num_free;
+}
+
+int
+Rename::calcFreeMSQEntries(ThreadID tid)
+{
+        int num_free = freeEntries[tid].msqEntries -
+            (storesInProgress[tid] - fromIEW->iewInfo[tid].dispatchedToSQ);
+        DPRINTF(Rename, "calcFreeMSQEntries: free sqEntries: %d, "
                 "storesInProgress: %d, stores dispatchedToSQ: %d\n",
                 freeEntries[tid].sqEntries, storesInProgress[tid],
                 fromIEW->iewInfo[tid].dispatchedToSQ);
