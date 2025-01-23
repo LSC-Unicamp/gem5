@@ -5099,15 +5099,19 @@ decode QUADRANT default Unknown::unknown() {
                 }});
                 // Row-Strided Load
                 0x4: MatrixStridedLoadOp::mls({{
-                    Mrd_uw[i] = Mem_mc.as<uint32_t>()[0] + Mrs3_uw[i];
+                    // TODO: Passar por todos os elementos e usar um if pra decidir se copia de Mem ou de Mrs3
+                    Mrd_uw[k + i * 4] = Mem_mc.as<uint32_t>()[k];
                 }}, ea_code={{
-                    EA = Rs1 + ((uint64_t) i / (rlenb / 4)) * Rs2 + (i % (rlenb / 4)) * 4;
+                    EA = Rs1 + i * Rs2;
+                }}, cp_code={{
+                    Mrd_uw[k + j * 4] = Mrs3_uw[k + j * 4];
                 }});
                 // Row-Strided Store
                 0x5: MatrixStridedStoreOp::mss({{
                     Mem_mc.as<uint32_t>()[0] = Mrs3_uw[i];
+                    Mrd_uw[0] = 0;
                 }}, ea_code={{
-                    EA = Rs1 + ((uint64_t) i / (rlenb / 4)) * Rs2 + (i % (rlenb / 4)) * 4;
+                    EA = Rs1 + i * Rs2;
                 }});
             }
             // Register-Register Movement
@@ -5118,6 +5122,7 @@ decode QUADRANT default Unknown::unknown() {
                 // }});
                 // x[rs1] -> mr[md]
                 0x1: ScalarMatrixMoveOp::mmv_xmu({{
+                    Mrs3_uw;
                     Mrd_uw[i] = Rs1_uw;
                 }});
                 // mr[ms1](0,0) -> x[rd]

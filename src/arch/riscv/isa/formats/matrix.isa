@@ -12,10 +12,12 @@ def MMemBase(name, Name, ea_code, code, base_class,
              exec_template_base='',
              macro_construtor=MatrixMacroConstructor,
              op_class='',
+             cp_code='',
              is_macroop=True):
     iop = InstObjParams(name, Name, base_class, 
         { 'code': code,
           'ea_code': ea_code,
+          'cp_code': cp_code,
           'op_class': op_class },
           inst_flags)
 
@@ -33,6 +35,7 @@ def MMemBase(name, Name, ea_code, code, base_class,
         Name + 'Micro',
         exec_template_base + 'MicroInst',
         {'ea_code': ea_code,
+         'cp_code': cp_code,
          'set_rlenb': setRlenb(),
          'set_rlen': setRlen(),
          'code': code,
@@ -163,11 +166,14 @@ def format MatrixStridedLoadOp(
         EA = Rs1;
     }},
     mem_flags=[],
+    cp_code={{
+    }},
     *flags
 ) {{
     (header_output, decoder_output, decode_block, exec_output) = \
         MMemBase(name, Name, ea_code, code, 'MatrixLoadMacroInst', 
                 mem_flags, flags, op_class='MatrixLoadOp',
+                cp_code=cp_code,
                 macro_construtor=MatrixMacroSplitConstructor,
                 exec_template_base='MatrixStridedLoad')
 }};

@@ -28,8 +28,7 @@ def template MatrixMacroSplitConstructor {{
 
         for (uint32_t i = 0; i < 4; i++) {
             microop = new %(class_name)sMicro(_machInst, i, this->microMl);
-            // microop->setDelayedCommit();
-            this->microops.push_back(microop);
+                        this->microops.push_back(microop);
         }
 
         this->microops.front()->setFirstMicroop();
@@ -48,8 +47,7 @@ def template MatrixMacroConstructor {{
         StaticInstPtr microop;
 
         microop = new %(class_name)sMicro(_machInst, 0, this->microMl);
-        microop->setDelayedCommit();
-        this->microops.push_back(microop);
+                this->microops.push_back(microop);
 
         this->microops.front()->setFirstMicroop();
         this->microops.back()->setLastMicroop();
@@ -287,7 +285,7 @@ def template MatrixStridedStoreMicroDeclare {{
     {
       private:
         RegId srcRegIdxArr[3];
-        RegId destRegIdxArr[0];
+        RegId destRegIdxArr[1];
       public:
         %(class_name)s(ExtMachInst _machInst);
         %(class_name)s(ExtMachInst _machInst, uint32_t _microIdx, 
@@ -319,6 +317,7 @@ def template MatrixLoadMicroExecute {{
     }
 }};
 
+// TODO: Update this Execute definition
 def template MatrixStridedLoadMicroExecute {{
     Fault
     %(class_name)s::execute(ExecContext *xc,
@@ -330,29 +329,25 @@ def template MatrixStridedLoadMicroExecute {{
         %(op_rd)s;
         %(set_rlenb)s;
 
-        uint32_t msew = 32;
-        uint32_t rows = 4; // rlenb / (msew / 8);
-        uint32_t i = microIdx;
+        // for loop replaces the microIdx
+        for (uint32_t i = 0; i < 4; i++) {
+            // TODO: Get Address from decoder.isa
+            %(ea_code)s
 
-        for (int row; row < rows; row++) {
-            int consumed = rows;
-
-            EA = Rs1 + ((uint64_t) i / (rlenb / 4)) * Rs2 + (i % (rlenb / 4)) * 4;
-
-            const size_t mem_size = 4 * consumed;
+            const size_t mem_size = 4 * 4;
             std::vector<bool> byte_enable(mem_size, true);
-
-            Fault fault = xc->readMem(EA, (uint8_t*) &Mem, mem_size, 
+            Fault fault = xc->readMem(EA, Mem.as<uint8_t>(), mem_size, 
                                   memAccessFlags, byte_enable);
+
             if (fault != NoFault)
                 return fault;
 
-            for (int k = 0; k < consumed; k++) {
-                Mrd[i + k] = Mem.as<uint32_t>()[k];
+            // % (code)s // Move code to decoder.isa
+            for (int k = 0; k < 4; k++) {
+                %(code)s
             }
-
-            i += consumed;
         }
+
         %(op_wb)s;
         return NoFault;
     }
@@ -384,29 +379,20 @@ def template MatrixStridedStoreMicroExecute {{
         %(op_rd)s;
         %(set_rlenb)s;
 
-        uint32_t msew = 32;
-        uint32_t rows = 4; // rlenb / (msew / 8);
-        uint32_t i = microIdx;
+        for (uint32_t i = 0; i < 4; i++) {
+            %(ea_code)s
 
-        for (int row; row < rows; row++) {
-            int consumed = rows;
-
-            EA = Rs1 + ((uint64_t) i / (rlenb / 4)) * Rs2 + (i % (rlenb / 4)) * 4;
-
-            const size_t mem_size = 4 * consumed;
+            const size_t mem_size = 4 * 4;
             std::vector<bool> byte_enable(mem_size, true);
 
-            for (int k = 0; k < consumed; k++) {
-                Mem.as<uint32_t>()[k] = Mrd[i + k];
+            for (int k = 0; k < 4; k++) {
+                Mem.as<uint32_t>()[k] = Mrs3[k + i * 4];
             }
 
             Fault fault = xc->writeMem((uint8_t*) &Mem, mem_size, EA, memAccessFlags,
                                     nullptr, byte_enable);
-
             if (fault != NoFault)
                 return fault;
-
-            i += consumed;
         }
         return NoFault;
     }
@@ -424,6 +410,7 @@ def template MatrixLoadMicroInitiateAcc{{
 
         %(ea_code)s;
 
+// Since there are no microops, gets 16 contiguous positions
         const size_t mem_size = 16 * 4;
         std::vector<bool> byte_enable(mem_size, true);
 
@@ -501,6 +488,10 @@ def template MatrixStridedStoreMicroInitiateAcc{{
         const size_t mem_size = 4 * 4;
         std::vector<bool> byte_enable(mem_size, true);
 
+        for (int k = 0; k < 16; k++) {
+            Mrd[k] = Mrs3[k];
+        }
+
         for (int k = 0; k < 4; k++) {
             Mem.as<uint32_t>()[k] = Mrs3[i * 4 + k];
         }
@@ -516,20 +507,21 @@ def template MatrixStridedLoadMicroInitiateAcc{{
     %(class_name)s::initiateAcc(ExecContext *xc,
         trace::InstRecord *traceData) const
     {
+Addr EA;
         %(op_decl)s;
         %(op_rd)s;
         %(set_rlenb)s;
 
         uint32_t i = microIdx;
 
-        Addr EA = Rs1 + i * Rs2;
+        %(ea_code)s
 
         const size_t mem_size = 4 * 4;
         std::vector<bool> byte_enable(mem_size, true);
 
         Fault fault = initiateMemRead(xc, EA, mem_size, memAccessFlags,
                                 byte_enable);
-        return NoFault;
+        return fault;
     }
 }};
 
@@ -552,12 +544,12 @@ def template MatrixStridedLoadMicroCompleteAcc{{
         // Copy Mrs3 data to Mrd
         for (int j = 0; j < 4; j++) {
             for (int k = 0; k < 4; k++) {
-                Mrd[k + j * 4] = Mrs3[k + j * 4];
+                %(cp_code)s
             }
         }
 
         for (int k = 0; k < 4; k++) {
-            Mrd[k + i * 4] = Mem.as<uint32_t>()[k];
+            %(code)s
         }
 
         %(op_wb)s
@@ -664,6 +656,8 @@ def template MatrixStridedStoreMicroConstructor {{
     setSrcRegIdx(_numSrcRegs++, intRegClass[_machInst.rs1]);
     setSrcRegIdx(_numSrcRegs++, intRegClass[_machInst.rs2]);
     setSrcRegIdx(_numSrcRegs++, matRegClass[_machInst.mrs3]);
+setDestRegIdx(_numDestRegs++, matRegClass[_machInst.mrd]);
+    _numTypedDestRegs[MatRegClass]++;
     this->flags[IsStore] = true;
 }
 
@@ -674,7 +668,7 @@ def template MatrixMoveMicroDeclare {{
     class %(class_name)s : public %(base_class)s
     {
       private:
-        RegId srcRegIdxArr[1];
+        RegId srcRegIdxArr[2];
         RegId destRegIdxArr[1];
       public:
         %(class_name)s(ExtMachInst _machInst);
@@ -719,6 +713,7 @@ def template ScalarMatrixMoveMicroConstructor {{
     setDestRegIdx(_numDestRegs++, matRegClass[_machInst.mrd]);
     _numTypedDestRegs[MatRegClass]++;
     setSrcRegIdx(_numSrcRegs++, intRegClass[_machInst.rs1]);
+setSrcRegIdx(_numSrcRegs++, matRegClass[_machInst.mrs3]);
 }
 
 }};
