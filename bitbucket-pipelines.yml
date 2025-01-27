@@ -1,0 +1,29 @@
+image: 10.10.73.51:5000/riscv-gcc-toolchain
+
+definitions:
+  steps:
+    - step: &build-step
+        name: Build
+        runs-on:
+          - self.hosted
+          - linux
+        size: 8x
+        script:
+          - BRANCH=${BITBUCKET_BRANCH//["/""."]/_}
+          - BUILD_ID=${BRANCH}-${BITBUCKET_BUILD_NUMBER}
+          - PACKAGE_FILE="gem5-build_${BUILD_ID}.tar.xz"
+          - scons build/RISCV/gem5.opt -j $(nproc)
+          - XZ_OPT='-T0' tar Jcf ${PACKAGE_FILE} build
+          - sha256sum ${PACKAGE_FILE} > ${PACKAGE_FILE}.sha256
+          - pipe: atlassian/sftp-deploy:0.10.0
+            variables:
+              USER: 'bitbucket-user'
+              SERVER: '10.10.73.51'
+              REMOTE_PATH: 'data/gem5-builds'
+              LOCAL_PATH: '${PACKAGE_FILE}*'
+              EXTRA_ARGS: '-o StrictHostKeyChecking=no'
+              DEBUG: 'true'
+
+pipelines:
+  default:
+    - step: *build-step
