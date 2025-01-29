@@ -10,12 +10,128 @@
 #include "arch/riscv/utility.hh"
 #include "cpu/exec_context.hh"
 #include "cpu/static_inst.hh"
+#include "debug/MatrixCmd.hh"
 
 namespace gem5
 {
 
 namespace RiscvISA
 {
+
+struct MatrixCmd {
+  enum Opcode {
+    ML = 0x20,
+    MS = 0x21,
+    MLS = 0x24,
+    MSS = 0x25,
+    MZERO = 0x41,
+    MMACU = 0x60,
+    MADDU = 0x61,
+    MSUBU = 0x62,
+    MMAC = 0x68,
+    MADD = 0x69,
+    MSUB = 0x6A,
+    MMACF = 0x70,
+    MADDF = 0x71,
+    MSUBF = 0x72,
+  };
+
+  enum Register {
+    M0 = 0,
+    M1,
+    M2,
+    M3,
+    M4,
+    M5,
+    M6,
+    M7,
+    M8,
+    M9,
+    M10,
+    M11,
+    M12,
+    M13,
+    M14,
+    M15,
+    M16,
+    M17,
+    M18,
+    M19,
+    M20,
+    M21,
+    M22,
+    M23,
+    M24,
+    M25,
+    M26,
+    M27,
+    M28,
+    M29,
+    M30,
+    M31,
+  };
+
+  enum SEW {
+    _1 = 0,
+    _2,
+    _4,
+    _8,
+    _16,
+    _32,
+    _64,
+    _128,
+  };
+
+  Opcode opcode : 8;
+  Register md : 5;
+  Register ms1 : 5;
+  Register ms2 : 5;
+  unsigned mrm : 1;
+  SEW mdsew : 4;
+  SEW ms1sew : 4;
+  SEW ms2sew : 4;
+  unsigned unused : 4;
+  unsigned m : 8;
+  unsigned n : 8;
+  unsigned k : 8;
+  uint64_t addr : 64;
+  uint64_t stride : 64;
+  uint64_t unused2 : 64;
+
+  MatrixCmd() {
+    opcode = Opcode::ML;
+    md = Register::M0;
+    ms1 = Register::M0;
+    ms2 = Register::M0;
+    mrm = 1;
+    mdsew = SEW::_32;
+    ms1sew = SEW::_32;
+    ms2sew = SEW::_32;
+    unused = 0;
+    m = 4;
+    n = 4;
+    k = 4;
+    addr = 0;
+    stride = 0;
+    unused2 = 0;
+  }
+
+  void print() const {
+    print(addr, stride);
+  }
+
+  void print(unsigned long _addr) const {
+    print(_addr, stride);
+  }
+
+  void print(unsigned long _addr, unsigned long _stride) const {
+    DPRINTF(MatrixCmd, "MatrixCmd: %#016x%016x%016x%016x \n",
+      ((uint64_t) opcode << 56) | ((uint64_t) md << 51) | ((uint64_t) ms1 << 46) | ((uint64_t) ms2 << 41) |
+      ((uint64_t) mrm << 40) | ((uint64_t) mdsew << 36) | ((uint64_t) ms1sew << 32) | ((uint64_t) ms2sew << 28) |
+      ((uint64_t) unused << 24) | ((uint64_t) m << 16) | ((uint64_t) n << 8) | k,
+      _addr, _stride, unused2);
+  }
+};
 
 /**
  * Base class for Matrix operations
@@ -24,7 +140,7 @@ class MatrixNonSplitInst : public RiscvStaticInst
 {
   protected:
     MatrixNonSplitInst(const char* mnem, ExtMachInst _machInst,
-OpClass __opClass)
+                    OpClass __opClass)
         : RiscvStaticInst(mnem, _machInst, __opClass)
     {
         this->flags[IsMatrix] = true;
@@ -60,6 +176,7 @@ class MatrixMicroInst : public RiscvMicroInst
   protected:
     uint32_t microIdx;
     uint64_t microMl;
+    MatrixCmd cmd;
 
     MatrixMicroInst(const char* mnem, ExtMachInst _machInst,
                     OpClass __opClass, uint32_t _microIdx, uint64_t _microMl)
@@ -70,6 +187,11 @@ class MatrixMicroInst : public RiscvMicroInst
         this->flags[IsMatrix] = true;
         this->flags[IsMicroop] = true;
         // this->flags[IsNonSpeculative] = true;
+
+        cmd.md = MatrixCmd::Register((unsigned) _machInst.mrd);
+        cmd.ms1 = MatrixCmd::Register((unsigned) _machInst.mrs1);
+        cmd.ms2 = MatrixCmd::Register((unsigned) _machInst.mrs2);
+        cmd.mrm = MatrixCmd::Register((unsigned) _machInst.mrm);
     }
 
     std::string generateDisassembly(
