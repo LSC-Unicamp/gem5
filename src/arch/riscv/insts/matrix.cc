@@ -17,7 +17,7 @@ namespace RiscvISA
 {
 
 std::string
-MatrixOp::generateDisassembly(Addr pc, const loader::SymbolTable *symtab) const {
+MatrixNonSplitInst::generateDisassembly(Addr pc, const loader::SymbolTable *symtab) const {
     std::stringstream ss;
     ss << mnemonic << ' ' 
         << registerName(destRegIdx(0)) << ", " 

@@ -20,26 +20,18 @@ namespace RiscvISA
 /**
  * Base class for Matrix operations
  */
-class MatrixOp : public RiscvStaticInst
-{
-  protected:
-    MatrixOp(const char *mnem, ExtMachInst _extMachInst, OpClass __opClass)
-        : RiscvStaticInst(mnem, _extMachInst, __opClass)
-    {
-        this->flags[IsMatrix] = true;
-    };
-
-    std::string generateDisassembly(
-        Addr pc, const loader::SymbolTable *symtab) const override;
-};
-
-class MatrixNonSplitInst : public MatrixOp
+class MatrixNonSplitInst : public RiscvStaticInst
 {
   protected:
     MatrixNonSplitInst(const char* mnem, ExtMachInst _machInst,
-                    OpClass __opClass)
-        : MatrixOp(mnem, _machInst, __opClass)
-    {}
+OpClass __opClass)
+        : RiscvStaticInst(mnem, _machInst, __opClass)
+    {
+        this->flags[IsMatrix] = true;
+    }
+
+    std::string generateDisassembly(
+        Addr pc, const loader::SymbolTable *symtab) const override;
 };
 
 class MatrixMacroInst : public RiscvMacroInst
