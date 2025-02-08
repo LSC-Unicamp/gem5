@@ -209,13 +209,7 @@ def template MatrixArithLineMicroExecute {{
 
         for (int row; row < 4; row++) {
             for(int col = 0; col < 4; col++) {
-                float acc = Mrs3->as<float>()[row * 4 + col];
-
-                for (int j = 0; j < 4; j++) {
-                    acc = (double) (Mrs1->as<float>()[row * 4 + j] * Mrs2->as<float>()[col * 4 + j]) + (double) acc;
-                }
-
-                Mrd[row * 4 + col] = acc;
+                %(code)s
             }
         }
 
@@ -431,6 +425,11 @@ def template MatrixLoadMicroInitiateAcc{{
         if (microIdx == 0)
             cmd.print(Rs1);
 
+        DPRINTF(MatRegs, "0x%x: %llu: initiateAcc :%s \n", 
+            xc->tcBase()->pcState().instAddr(), 
+            xc->tcBase()->getCpuPtr()->curCycle(), 
+            generateDisassembly(0, nullptr)
+        );
         return NoFault;
     }
 }};
@@ -449,6 +448,12 @@ def template MatrixLoadMicroCompleteAcc{{
         for (int k = 0; k < 16; k++) {
             Mrd[k] = Mem.as<uint32_t>()[k];
         }
+
+        DPRINTF(MatRegs, "0x%x: %llu: completeAcc :%s \n", 
+            xc->tcBase()->pcState().instAddr(), 
+            xc->tcBase()->getCpuPtr()->curCycle(), 
+            generateDisassembly(0, nullptr)
+        );
 
         %(op_wb)s;
         return NoFault;
