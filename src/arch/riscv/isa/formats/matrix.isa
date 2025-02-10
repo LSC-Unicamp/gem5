@@ -132,7 +132,7 @@ def MMoveBase(name, Name, code, base_class,
 def format MatrixLoadOp(
     code,
     ea_code={{
-        EA = Rs1 + ((uint64_t) microIdx / 4) * Rs2 + (microIdx % 4) * 4;
+        EA = Rs1 + Rs2 * microIdx;
     }},
     mem_flags=[],
     *flags
@@ -140,7 +140,7 @@ def format MatrixLoadOp(
     (header_output, decoder_output, decode_block, exec_output) = \
         MMemBase(name, Name, ea_code, code, 'MatrixLoadMacroInst', 
                 mem_flags, flags, op_class='MemReadOp',
-                macro_construtor=MatrixMacroConstructor,
+                macro_construtor=MatrixMacroSplitConstructor,
                 exec_template_base='MatrixLoad')
 }};
 
@@ -148,7 +148,7 @@ def format MatrixLoadOp(
 def format MatrixStoreOp(
     code,
     ea_code={{
-        EA = Rs1 + ((uint64_t) microIdx / 4) * Rs2 + (microIdx % 4) * 4;
+        EA = Rs1 + Rs2 * microIdx;
     }},
     mem_flags=[],
     *flags
@@ -156,7 +156,7 @@ def format MatrixStoreOp(
     (header_output, decoder_output, decode_block, exec_output) = \
         MMemBase(name, Name, ea_code, code, 'MatrixStoreMacroInst', 
                  mem_flags, flags, op_class='MemWriteOp',
-                 macro_construtor=MatrixMacroConstructor,
+                 macro_construtor=MatrixMacroSplitConstructor,
                  exec_template_base='MatrixStore')
 }};
 
