@@ -1008,6 +1008,8 @@ class DynInst : public ExecContext, public RefCounted
     int32_t completeTick = -1;
     int32_t commitTick = -1;
     int32_t storeTick = -1;
+    int32_t initiateAccTick = -1;
+    int32_t completeAccTick = -1;
 #endif
 
     /* Values used by LoadToUse stat */

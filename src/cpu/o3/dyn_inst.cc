@@ -46,6 +46,7 @@
 #include "debug/DynInst.hh"
 #include "debug/IQ.hh"
 #include "debug/O3PipeView.hh"
+#include "debug/O3PipeViewMem.hh"
 
 namespace gem5
 {
@@ -242,6 +243,11 @@ DynInst::~DynInst()
             DPRINTFR(O3PipeView, "O3PipeView:issue:%llu\n", val);
             val = (completeTick == -1) ? 0 : fetch + completeTick;
             DPRINTFR(O3PipeView, "O3PipeView:complete:%llu\n", val);
+            
+            val = (initiateAccTick == -1) ? 0 : fetch + initiateAccTick;
+            DPRINTFR(O3PipeViewMem, "O3PipeView:initiateAcc:%llu\n", val);
+            val = (completeAccTick == -1) ? 0 : fetch + completeAccTick;
+            DPRINTFR(O3PipeViewMem, "O3PipeView:completeAcc:%llu\n", val);
             val = (commitTick == -1) ? 0 : fetch + commitTick;
 
             Tick valS = (storeTick == -1) ? 0 : fetch + storeTick;

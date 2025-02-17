@@ -621,7 +621,7 @@ Rename::renameInsts(ThreadID tid)
             if (calcFreeMLQEntries(tid) <= 0) {
                 DPRINTF(Rename, "[tid:%i] Cannot rename due to no free MLQ\n",
                         tid);
-                source = MLQ;
+                source = LQ;
                 incrFullStat(source);
                 break;
             }
@@ -639,7 +639,7 @@ Rename::renameInsts(ThreadID tid)
             if (calcFreeMSQEntries(tid) <= 0) {
                 DPRINTF(Rename, "[tid:%i] Cannot rename due to no free MSQ\n",
                         tid);
-                source = MSQ;
+                source = SQ;
                 incrFullStat(source);
                 break;
             }

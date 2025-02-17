@@ -694,6 +694,13 @@ LSQUnit::executeStore(const DynInstPtr &store_inst)
 
     Fault store_fault = store_inst->initiateAcc();
 
+#if TRACING_ON
+    if (debug::O3PipeView) {
+        store_inst->initiateAccTick =
+            curTick() - store_inst->fetchTick;
+    }
+#endif
+
     if (store_inst->isTranslationDelayed() &&
         store_fault == NoFault)
         return store_fault;
@@ -743,6 +750,13 @@ LSQUnit::commitLoad()
     assert(loadQueue.front().valid());
 
     DynInstPtr inst = loadQueue.front().instruction();
+
+#if TRACING_ON
+    if (debug::O3PipeView) {
+        inst->completeAccTick =
+            curTick() - inst->fetchTick;
+    }
+#endif
 
     DPRINTF(LSQUnit, "Committing head load instruction, PC %s\n",
             inst->pcState());
@@ -1110,6 +1124,13 @@ LSQUnit::writeback(const DynInstPtr &inst, PacketPtr pkt)
         if (inst->fault == NoFault) {
             // Complete access to copy data to proper place.
             inst->completeAcc(pkt);
+
+#if TRACING_ON
+    if (debug::O3PipeView) {
+        inst->completeAccTick =
+            curTick() - inst->fetchTick;
+    }
+#endif
         } else {
             // If the instruction has an outstanding fault, we cannot complete
             // the access as this discards the current fault.
@@ -1345,6 +1366,13 @@ LSQUnit::read(LSQRequest *request, ssize_t load_idx)
     assert(load_inst);
 
     assert(!load_inst->isExecuted());
+
+#if TRACING_ON
+    if (debug::O3PipeView) {
+        load_inst->initiateAccTick =
+            curTick() - load_inst->fetchTick;
+    }
+#endif
 
     // Make sure this isn't a strictly ordered load
     // A bit of a hackish way to get strictly ordered accesses to work

@@ -479,8 +479,6 @@ class Rename
         IQ,
         LQ,
         SQ,
-        MLQ,
-        MSQ,
         NONE
     };
 
