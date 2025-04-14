@@ -1,4 +1,4 @@
-image: 10.10.73.51:5000/riscv-gcc-toolchain
+image: 10.10.73.51:5000/mpe-toolchain:latest
 
 definitions:
   steps:
@@ -7,7 +7,7 @@ definitions:
         runs-on:
           - self.hosted
           - linux
-        size: 8x
+        size: 16x
         script:
           - BRANCH=${BITBUCKET_BRANCH//["/""."]/_}
           - BUILD_ID=${BRANCH}-${BITBUCKET_BUILD_NUMBER}
@@ -19,7 +19,7 @@ definitions:
           - make -j6
           - cp ./ramulator2 ../ramulator2             
           - cd -
-          - scons build/RISCV/gem5.opt -j $(nproc)
+          - scons build/RISCV/gem5.opt -j 12
           - XZ_OPT='-T0' tar Jcf ${PACKAGE_FILE} build
           - sha256sum ${PACKAGE_FILE} > ${PACKAGE_FILE}.sha256
           - pipe: atlassian/sftp-deploy:0.10.0
