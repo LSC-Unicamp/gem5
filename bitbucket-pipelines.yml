@@ -13,13 +13,7 @@ definitions:
           - BUILD_ID=${BRANCH}-${BITBUCKET_BUILD_NUMBER}
           - PACKAGE_FILE="gem5-build_${BUILD_ID}.tar.xz"
           - git submodule update --init
-          - mkdir ext/ramulator2/build
-          - cd ext/ramulator2/build
-          - cmake ..
-          - make -j6
-          - cp ./ramulator2 ../ramulator2             
-          - cd -
-          - scons build/RISCV/gem5.opt -j 12
+          - bash -x build.sh
           - XZ_OPT='-T0' tar Jcf ${PACKAGE_FILE} build
           - sha256sum ${PACKAGE_FILE} > ${PACKAGE_FILE}.sha256
           - pipe: atlassian/sftp-deploy:0.10.0
