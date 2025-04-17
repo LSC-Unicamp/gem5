@@ -14,17 +14,41 @@ definitions:
           - PACKAGE_FILE="gem5-build_${BUILD_ID}.tar.xz"
           - git submodule update --init
           - bash -x build.sh
-          - XZ_OPT='-T0' tar Jcf ${PACKAGE_FILE} build
-          - sha256sum ${PACKAGE_FILE} > ${PACKAGE_FILE}.sha256
-          - pipe: atlassian/sftp-deploy:0.10.0
-            variables:
-              USER: 'bitbucket-user'
-              SERVER: '10.10.73.51'
-              REMOTE_PATH: 'data/gem5-builds'
-              LOCAL_PATH: '${PACKAGE_FILE}*'
-              EXTRA_ARGS: '-o StrictHostKeyChecking=no'
-              DEBUG: 'true'
 
+          # prepare artifacts for upload
+          - mkdir install
+          - mkdir artifacts
+          - cp -v build/RISCV/gem5.opt install
+          - cp -v ext/ramulator2/libramulator.so install
+          - cd install
+          - XZ_OPT='-T0' tar Jcf ${PACKAGE_FILE} *
+          - sha256sum ${PACKAGE_FILE} > ${PACKAGE_FILE}.sha256
+          - mv ${PACKAGE_FILE} ../artifacts
+        artifacts: 
+          - artifacts/*
+    - step: &upload-step
+        name: Upload files
+        runs-on:
+          - self.hosted
+          - linux
+        clone:
+          enabled: false
+        script:
+          - BRANCH=${BITBUCKET_BRANCH//["/""."]/_}
+          - BUILD_ID=${BRANCH}-${BITBUCKET_BUILD_NUMBER}
+          - PACKAGE_FILE="gem5-build_${BUILD_ID}.tar.xz"
+          - CURL_HEADER="Authorization:Bearer ${REPO_DOWNLOADS_TOKEN}"
+          - apt-get update
+          - apt-get install -y curl
+          - pwd
+          - la -lah
+          - cd artifacts
+          - ls -lah
+          - curl --fail --request POST --url 'https://api.bitbucket.org/2.0/repositories/eldoradocorp/gem5/downloads' --header "${CURL_HEADER}" -F "files=@${PACKAGE_FILE}"
+          - curl --fail --request POST --url 'https://api.bitbucket.org/2.0/repositories/eldoradocorp/gem5/downloads' --header "${CURL_HEADER}" -F "files=@${PACKAGE_FILE}.sha256"
+        artifacts: 
+          - artifacts/*
 pipelines:
   default:
     - step: *build-step
+    - step: *upload-step
