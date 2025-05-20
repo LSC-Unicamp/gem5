@@ -94,21 +94,6 @@ class ISA : public BaseISA
      */
     unsigned elen;
 
-    /** 
-     *  Length of each matrix register row in bits.
-     */
-    unsigned rlen;
-
-    /**
-     *  Length of each matrix register in bits.
-     */
-    unsigned mlen;
-
-    /**
-     *  Number o bits each matrix microop operates on.
-     */
-    unsigned microml;
-
     /** The combination of privilege modes
      *  in Privilege Levels section of RISC-V privileged spec
      */
@@ -130,6 +115,21 @@ class ISA : public BaseISA
      * Refs: https://github.com/riscv/riscv-isa-manual/blob/main/src/zc.adoc
      */
     bool _enableZcd;
+
+    /** 
+     *  Length of each matrix register row in bits.
+     */
+    unsigned rlen;
+
+    /**
+     *  Length of each matrix register in bits.
+     */
+    unsigned mlen;
+
+    /**
+     *  Number o bits each matrix microop operates on.
+     */
+    unsigned microml;
 
   public:
     using Params = RiscvISAParams;

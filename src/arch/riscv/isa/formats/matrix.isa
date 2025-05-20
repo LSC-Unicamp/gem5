@@ -1,9 +1,7 @@
 let {{
 
-def setRlen():
-    return "uint32_t rlen = RlenbBits << 3;\n"
 def setRlenb():
-    return "uint32_t rlenb = RlenbBits;\n"
+    return "[[maybe_unused]] uint32_t rlenb = rlen;\n"
 
 def MMemBase(name, Name, ea_code, code, base_class,
              mem_flags, inst_flags,
@@ -37,7 +35,6 @@ def MMemBase(name, Name, ea_code, code, base_class,
         {'ea_code': ea_code,
          'cp_code': cp_code,
          'set_rlenb': setRlenb(),
-         'set_rlen': setRlen(),
          'code': code,
          'op_class': op_class },
         inst_flags
@@ -85,7 +82,6 @@ def MArithBase(name, Name, code, base_class,
         exec_template_base + 'MicroInst',
         {'code': code, 
          'set_rlenb': setRlenb(),
-         'set_rlen': setRlen(),
          'op_class': op_class},
         inst_flags
         )
@@ -130,7 +126,6 @@ def MMoveBase(name, Name, code, base_class,
         micro_class_name,
         {'code': code, 
          'set_rlenb': setRlenb(),
-         'set_rlen': setRlen(),
          'op_class': op_class},
         inst_flags)
 

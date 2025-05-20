@@ -174,13 +174,16 @@ class MatrixMacroInst : public RiscvMacroInst
 class MatrixMicroInst : public RiscvMicroInst
 {
   protected:
+    uint64_t rlen;
     uint32_t microIdx;
     uint64_t microMl;
     MatrixCmd cmd;
 
     MatrixMicroInst(const char* mnem, ExtMachInst _machInst,
-                    OpClass __opClass, uint32_t _microIdx, uint64_t _microMl)
+                    OpClass __opClass, uint32_t _microIdx, uint64_t _microMl,
+                    uint64_t _rlen = 128)
         : RiscvMicroInst(mnem, _machInst, __opClass),
+        rlen(_rlen),
         microIdx(_microIdx),
         microMl(_microMl)
     {

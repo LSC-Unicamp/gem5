@@ -5122,7 +5122,7 @@ decode QUADRANT default Unknown::unknown() {
                 // }});
                 // x[rs1] -> mr[md]
                 0x1: ScalarMatrixMoveOp::mmv_xmu({{
-                    Mrs3_uw;
+                    // Mrs3_uw;
                     Mrd_uw[i] = Rs1_uw;
                 }});
                 // mr[ms1](0,0) -> x[rd]

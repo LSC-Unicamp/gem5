@@ -21,11 +21,6 @@ def template MatrixMacroSplitConstructor {{
 
         StaticInstPtr microop;
         
-        uint64_t lines = rlen / 32;
-        uint64_t elem_width = 32;
-        uint64_t columns = rlen / elem_width;
-        uint64_t elems = lines * columns;
-
         for (uint32_t i = 0; i < 4; i++) {
             microop = new %(class_name)sMicro(_machInst, i, this->microMl);
             this->microops.push_back(microop);
@@ -182,7 +177,7 @@ def template MatrixMoveMicroExecute {{
         uint32_t msew = 32;
         uint32_t rows = rlenb / (msew / 8);
         uint32_t i = microIdx;
-        for (int row; row < rows; row++) {
+        for (int row = 0; row < rows; row++) {
             int consumed = rows;
             for(int k = 0; k < consumed; k++) {
                 %(code)s;
@@ -207,7 +202,7 @@ def template MatrixArithLineMicroExecute {{
         %(op_rd)s
         %(set_rlenb)s
 
-        for (int row; row < 4; row++) {
+        for (int row = 0; row < 4; row++) {
             for(int col = 0; col < 4; col++) {
                 %(code)s
             }
@@ -308,7 +303,7 @@ def template MatrixLoadMicroExecute {{
     %(class_name)s::execute(ExecContext *xc,
         trace::InstRecord *traceData) const
     {
-        Addr EA;
+        [[maybe_unused]] Addr EA;
 
         %(op_decl)s;
         %(op_rd)s;
@@ -328,7 +323,7 @@ def template MatrixStridedLoadMicroExecute {{
     %(class_name)s::execute(ExecContext *xc,
         trace::InstRecord *traceData) const
     {
-        Addr EA;
+        [[maybe_unused]] Addr EA;
 
         %(op_decl)s;
         %(op_rd)s;
@@ -363,7 +358,7 @@ def template MatrixStoreMicroExecute {{
     %(class_name)s::execute(ExecContext *xc,
         trace::InstRecord *traceData) const
     {
-        Addr EA;
+        [[maybe_unused]] Addr EA;
 
         %(op_decl)s;
         %(op_rd)s;
@@ -378,7 +373,7 @@ def template MatrixStridedStoreMicroExecute {{
     %(class_name)s::execute(ExecContext *xc,
         trace::InstRecord *traceData) const
     {
-        Addr EA;
+        [[maybe_unused]] Addr EA;
 
         %(op_decl)s;
         %(op_rd)s;
@@ -408,7 +403,7 @@ def template MatrixLoadMicroInitiateAcc{{
     %(class_name)s::initiateAcc(ExecContext *xc,
         trace::InstRecord *traceData) const
     {
-        Addr EA;
+        [[maybe_unused]] Addr EA;
         %(op_decl)s;
         %(op_rd)s;
         %(set_rlenb)s;
@@ -497,7 +492,7 @@ def template MatrixStridedStoreMicroInitiateAcc{{
     %(class_name)s::initiateAcc(ExecContext *xc,
         trace::InstRecord *traceData) const
     {
-        Addr EA;
+        [[maybe_unused]] Addr EA;
 
         %(op_decl)s;
         %(op_rd)s;
@@ -529,7 +524,7 @@ def template MatrixStridedLoadMicroInitiateAcc{{
     %(class_name)s::initiateAcc(ExecContext *xc,
         trace::InstRecord *traceData) const
     {
-        Addr EA;
+        [[maybe_unused]] Addr EA;
         %(op_decl)s;
         %(op_rd)s;
         %(set_rlenb)s;

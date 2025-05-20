@@ -133,17 +133,17 @@ class RiscvISA(BaseISA):
         ELEN in Ch. 2 of RISC-V vector spec",
     )
     rlen = Param.RiscvMatrixRowLength(
-        256,
+        128,
         "Length of each matrix register row in bits.",
     )
     mlen = Param.RiscvMatrixRowLength(
-        2048,
+        512,
         "Length of each matrix register in bits.",
     )
-    microml = Param.RiscvMatrixMicroLength(
-        256,
-        "Number o bits each matrix microop operates on..",
-    )
+    # microml = Param.RiscvMatrixMicroLength(
+    #     256,
+    #     "Number o bits each matrix microop operates on..",
+    # )
     privilege_mode_set = Param.PrivilegeModeSet(
         "MSU",
         "The combination of privilege modes \
