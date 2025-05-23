@@ -80,7 +80,7 @@ Rename::Rename(CPU *_cpu, const BaseO3CPUParams &params)
         instsInProgress[tid] = 0;
         loadsInProgress[tid] = 0;
         storesInProgress[tid] = 0;
-        freeEntries[tid] = {0, 0, 0, 0};
+        freeEntries[tid] = {0, 0, 0, 0, 0, 0};
         emptyROB[tid] = true;
         stalls[tid] = {false, false};
         serializeInst[tid] = nullptr;
@@ -614,8 +614,6 @@ Rename::renameInsts(ThreadID tid)
         //instruction, check LQ size and take into account the inflight loads
         //For store instruction, check SQ size and take into account the
         //inflight stores
-
-        // Need to specialize for Matrix operations
 
         if (inst->isLoad() && inst->isMatrix()) {
             if (calcFreeMLQEntries(tid) <= 0) {

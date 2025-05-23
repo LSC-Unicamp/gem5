@@ -1490,8 +1490,6 @@ CPU::getPort(const std::string &if_name, PortID idx)
         return getInstPort();
     else if (if_name == "model_reset")
         return modelResetPort;
-    else if (if_name == "mdcache_port")
-        return getMatrixDataPort();
     else
         return ClockedObject::getPort(if_name, idx);
 }

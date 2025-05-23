@@ -979,7 +979,7 @@ IEW::dispatchInsts(ThreadID tid)
             ++iewStats.dispNonSpecInsts;
 
             toRename->iewInfo[tid].dispatchedToSQ++;
-        } else if (inst->isMatrix() && inst->isLoad()) {
+        } else if (cpu->isMatrix && inst->isMatrix() && inst->isLoad()) {
             DPRINTF(IEW, "[tid:%i] Issue: Memory instruction "
                     "encountered, adding to MLSQ.\n", tid);
 
@@ -994,7 +994,7 @@ IEW::dispatchInsts(ThreadID tid)
 
             // TODO: Maybe create new counter
             toRename->iewInfo[tid].dispatchedToLQ++;
-        } else if (inst->isMatrix() && inst->isStore()) {
+        } else if (cpu->isMatrix && inst->isMatrix() && inst->isStore()) {
             DPRINTF(IEW, "[tid:%i] Issue: Memory instruction "
                     "encountered, adding to MLSQ.\n", tid);
 
@@ -1216,7 +1216,7 @@ IEW::executeInsts()
             } else if (inst->isLoad()) {
                 // Loads will mark themselves as executed, and their writeback
                 // event adds the instruction to the queue to commit
-                if (inst->isMatrix())
+                if (inst->isMatrix() && cpu->isMatrix)
                     fault = mldstQueue.executeLoad(inst);
                 else
                     fault = ldstQueue.executeLoad(inst);
@@ -1235,7 +1235,7 @@ IEW::executeInsts()
                     inst->fault = NoFault;
                 }
             } else if (inst->isStore()) {
-                if (inst->isMatrix())
+                if (inst->isMatrix() && cpu->isMatrix)
                     fault = mldstQueue.executeStore(inst);
                 else
                     fault = ldstQueue.executeStore(inst);

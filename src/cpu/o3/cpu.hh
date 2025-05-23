@@ -479,6 +479,8 @@ class CPU : public BaseCPU
     /** The IEW stage's instruction queue. */
     TimeBuffer<IEWStruct> iewQueue;
 
+    bool isMatrix = false;
+
   private:
     /** The activity recorder; used to tell if the CPU has any
      * activity remaining or if it can go to idle and deschedule
@@ -569,7 +571,7 @@ class CPU : public BaseCPU
                 const std::vector<bool>& byte_enable=std::vector<bool>())
 
     {
-        return iew.mldstQueue.pushRequest(inst, isLoad, data, size, addr,
+        return iew.ldstQueue.pushRequest(inst, isLoad, data, size, addr,
                 flags, res, std::move(amo_op), byte_enable);
     }
 
@@ -591,7 +593,7 @@ class CPU : public BaseCPU
     Port &
     getMatrixDataPort()
     {
-        return iew.mldstQueue.getDataPort();
+        return iew.ldstQueue.getDataPort();
     }
 
     struct CPUStats : public statistics::Group

@@ -418,11 +418,19 @@ DynInst::initiateMemRead(Addr addr, unsigned size, Request::Flags flags,
                                const std::vector<bool> &byte_enable)
 {
     assert(byte_enable.size() == size);
-    if (this->isMatrix())
-        return cpu->pushMatrixRequest(
-            dynamic_cast<DynInstPtr::PtrType>(this),
-            /* ld */ true, nullptr, size, addr, flags, nullptr, nullptr,
-            byte_enable);
+    if (this->isMatrix()) {
+        if (cpu->isMatrix) {
+            return dynamic_cast<MatrixCPU*>(cpu)->pushMatrixRequest(
+                dynamic_cast<DynInstPtr::PtrType>(this),
+                /* ld */ true, nullptr, size, addr, flags, nullptr, nullptr,
+                byte_enable);
+        } else {
+            return cpu->pushMatrixRequest(
+                dynamic_cast<DynInstPtr::PtrType>(this),
+                /* ld */ true, nullptr, size, addr, flags, nullptr, nullptr,
+                byte_enable);
+        }
+    }
     return cpu->pushRequest(
         dynamic_cast<DynInstPtr::PtrType>(this),
         /* ld */ true, nullptr, size, addr, flags, nullptr, nullptr,
@@ -445,11 +453,19 @@ DynInst::writeMem(uint8_t *data, unsigned size, Addr addr,
                         const std::vector<bool> &byte_enable)
 {
     assert(byte_enable.size() == size);
-    if (this->isMatrix())
-        return cpu->pushMatrixRequest(
-            dynamic_cast<DynInstPtr::PtrType>(this),
-            /* st */ false, data, size, addr, flags, res, nullptr,
-            byte_enable);
+    if (this->isMatrix()) {
+        if (cpu->isMatrix) {
+            return dynamic_cast<MatrixCPU*>(cpu)->pushMatrixRequest(
+                dynamic_cast<DynInstPtr::PtrType>(this),
+                /* st */ false, data, size, addr, flags, res, nullptr,
+                byte_enable);
+        } else {
+            return cpu->pushMatrixRequest(
+                dynamic_cast<DynInstPtr::PtrType>(this),
+                /* st */ false, data, size, addr, flags, res, nullptr,
+                byte_enable);
+        }
+    }
     return cpu->pushRequest(
         dynamic_cast<DynInstPtr::PtrType>(this),
         /* st */ false, data, size, addr, flags, res, nullptr,

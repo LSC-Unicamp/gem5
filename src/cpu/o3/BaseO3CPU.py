@@ -193,5 +193,3 @@ class BaseO3CPU(BaseCPU):
         TournamentBP(numThreads=Parent.numThreads), "Branch Predictor"
     )
     needsTSO = Param.Bool(False, "Enable TSO Memory model")
-
-    mdcache_port = RequestPort("Matrix Data Port")

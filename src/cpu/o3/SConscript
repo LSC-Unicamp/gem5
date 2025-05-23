@@ -35,6 +35,7 @@ if env['CONF']['BUILD_ISA']:
     SimObject('FuncUnitConfig.py', sim_objects=[])
     SimObject('BaseO3CPU.py', sim_objects=['BaseO3CPU'], enums=[
         'SMTFetchPolicy', 'SMTQueuePolicy', 'CommitPolicy'])
+    SimObject('MatrixO3CPU.py', sim_objects=['MatrixO3CPU'])
 
     Source('commit.cc')
     Source('cpu.cc')
@@ -47,6 +48,7 @@ if env['CONF']['BUILD_ISA']:
     Source('inst_queue.cc')
     Source('lsq.cc')
     Source('lsq_unit.cc')
+    Source('matrix_cpu.cc')
     Source('mem_dep_unit.cc')
     Source('regfile.cc')
     Source('rename.cc')
