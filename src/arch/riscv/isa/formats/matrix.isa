@@ -1,7 +1,10 @@
 let {{
 
 def setRlenb():
-    return "[[maybe_unused]] uint32_t rlenb = rlen;\n"
+    return "[[maybe_unused]] uint32_t rlenb = rlen >> 3;\n"
+
+def setMlenb():
+    return "[[maybe_unused]] uint32_t mlenb = mlen >> 3;\n"
 
 def MMemBase(name, Name, ea_code, code, base_class,
              mem_flags, inst_flags,
@@ -158,7 +161,7 @@ def format MatrixLoadOp(
 def format MatrixStridedLoadOp(
     code,
     ea_code={{
-        EA = Rs1;
+        EA = Rs1 + i * Rs2;
     }},
     mem_flags=[],
     cp_code={{
@@ -177,7 +180,7 @@ def format MatrixStridedLoadOp(
 def format MatrixStoreOp(
     code,
     ea_code={{
-        EA = Rs1 + ((uint64_t) microIdx / (rlenb / 4)) * Rs2 + (microIdx % (rlenb / 4)) * 4;
+        EA = Rs1;
     }},
     mem_flags=[],
     *flags
@@ -193,7 +196,7 @@ def format MatrixStoreOp(
 def format MatrixStridedStoreOp(
     code,
     ea_code={{
-        EA = Rs1 + ((uint64_t) microIdx / (rlenb / 4)) * Rs2 + (microIdx % (rlenb / 4)) * 4;
+        EA = Rs1 + i * Rs2;
     }},
     mem_flags=[],
     *flags

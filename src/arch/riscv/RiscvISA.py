@@ -86,20 +86,6 @@ class RiscvMatrixRowLength(UInt32):
         if self.value & (self.value - 1) != 0:
             raise TypeError("RLEN is not a power of 2: %d" % self.value)
 
-
-class RiscvMatrixMicroLength(UInt32):
-    min = 8
-    max = 65536
-
-    def _check(self):
-        super()._check()
-
-        # MICROML needs to be a whole power of 2. We already know value is
-        # not zero. Hence:
-        if self.value & (self.value - 1) != 0:
-            raise TypeError("MICROML is not a power of 2: %d" % self.value)
-
-
 class RiscvType(Enum):
     vals = ["RV32", "RV64"]
 
@@ -140,10 +126,6 @@ class RiscvISA(BaseISA):
         512,
         "Length of each matrix register in bits.",
     )
-    # microml = Param.RiscvMatrixMicroLength(
-    #     256,
-    #     "Number o bits each matrix microop operates on..",
-    # )
     privilege_mode_set = Param.PrivilegeModeSet(
         "MSU",
         "The combination of privilege modes \

@@ -5091,7 +5091,7 @@ decode QUADRANT default Unknown::unknown() {
             0x1: decode FUNCT3 {
                 // Contiguous Load
                 0x0: MatrixLoadOp::ml({{
-                    Mrd_uw[i] = Mem_mc.as<uint32_t>()[0];
+                    Mrd_uw[k] = Mem_mc.as<uint32_t>()[k];
                 }});
                 // Contiguous Store
                 0x1: MatrixStoreOp::ms({{
@@ -5101,8 +5101,6 @@ decode QUADRANT default Unknown::unknown() {
                 0x4: MatrixStridedLoadOp::mls({{
                     // TODO: Passar por todos os elementos e usar um if pra decidir se copia de Mem ou de Mrs3
                     Mrd_uw[k + i * 4] = Mem_mc.as<uint32_t>()[k];
-                }}, ea_code={{
-                    EA = Rs1 + i * Rs2;
                 }}, cp_code={{
                     Mrd_uw[k + j * 4] = Mrs3_uw[k + j * 4];
                 }});
@@ -5110,8 +5108,6 @@ decode QUADRANT default Unknown::unknown() {
                 0x5: MatrixStridedStoreOp::mss({{
                     Mem_mc.as<uint32_t>()[0] = Mrs3_uw[i];
                     Mrd_uw[0] = 0;
-                }}, ea_code={{
-                    EA = Rs1 + i * Rs2;
                 }});
             }
             // Register-Register Movement

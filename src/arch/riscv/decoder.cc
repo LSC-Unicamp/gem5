@@ -46,8 +46,7 @@ Decoder::Decoder(const RiscvDecoderParams &p) : InstDecoder(p, &machInst)
     elen = isa->getVecElemLenInBits();
     _enableZcd = isa->enableZcd();
     rlen = isa->getRLenInBits();
-    mlen = isa->getMlen();
-    microml = isa->getMicroMatrixLength();
+    mlen = isa->getMlenInBits();
     reset();
 }
 

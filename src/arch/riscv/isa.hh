@@ -126,11 +126,6 @@ class ISA : public BaseISA
      */
     unsigned mlen;
 
-    /**
-     *  Number o bits each matrix microop operates on.
-     */
-    unsigned microml;
-
   public:
     using Params = RiscvISAParams;
 
@@ -200,9 +195,7 @@ class ISA : public BaseISA
 
     int64_t getVectorLengthInBytes() const override { return vlen >> 3; }
 
-    unsigned getMlen() { return mlen; }
-
-    unsigned getMicroMatrixLength() { return microml; }
+    unsigned getMlenInBits() { return mlen; }
 
     unsigned getRLenInBits() { return rlen; }
     unsigned getRLenInBytes() { return rlen >> 3; }

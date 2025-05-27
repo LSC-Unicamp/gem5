@@ -6,23 +6,25 @@ def template MatrixMacroDeclare {{
     
       public:
         %(class_name)s(ExtMachInst _machInst);
-        %(class_name)s(ExtMachInst _machInst, uint64_t _rlen, uint64_t _microml);
+        %(class_name)s(ExtMachInst _machInst, uint64_t _rlen, uint64_t _mlen);
         using %(base_class)s::generateDisassembly;
     };
 }};
 
 
 def template MatrixMacroSplitConstructor {{
-    %(class_name)s::%(class_name)s(ExtMachInst _machInst, uint64_t _rlen, uint64_t _microml)
-        : %(base_class)s("%(mnemonic)s", _machInst, %(op_class)s, _rlen, _microml)
+    %(class_name)s::%(class_name)s(ExtMachInst _machInst, uint64_t _rlen, uint64_t _mlen)
+        : %(base_class)s("%(mnemonic)s", _machInst, %(op_class)s, _rlen, _mlen)
     {
         %(set_reg_idx_arr)s;
         %(constructor)s;
 
         StaticInstPtr microop;
         
-        for (uint32_t i = 0; i < 4; i++) {
-            microop = new %(class_name)sMicro(_machInst, i, this->microMl);
+        const uint32_t rows = mlen / rlen;
+
+        for (uint32_t i = 0; i < rows; i++) {
+            microop = new %(class_name)sMicro(_machInst, i, rlen, mlen);
             this->microops.push_back(microop);
         }
 
@@ -33,15 +35,15 @@ def template MatrixMacroSplitConstructor {{
 
 
 def template MatrixMacroConstructor {{
-    %(class_name)s::%(class_name)s(ExtMachInst _machInst, uint64_t _rlen, uint64_t _microml)
-        : %(base_class)s("%(mnemonic)s", _machInst, %(op_class)s, _rlen, _microml)
+    %(class_name)s::%(class_name)s(ExtMachInst _machInst, uint64_t _rlen, uint64_t _mlen)
+        : %(base_class)s("%(mnemonic)s", _machInst, %(op_class)s, _rlen, _mlen)
     {
         %(set_reg_idx_arr)s;
         %(constructor)s;
 
         StaticInstPtr microop;
 
-        microop = new %(class_name)sMicro(_machInst, 0, this->microMl);
+        microop = new %(class_name)sMicro(_machInst, 0, rlen, mlen);
         this->microops.push_back(microop);
 
         this->microops.front()->setFirstMicroop();
@@ -58,8 +60,7 @@ def template MatrixArithMicroDeclare {{
         RegId destRegIdxArr[1];
       public:
         %(class_name)s(ExtMachInst _machInst);
-        %(class_name)s(ExtMachInst _machInst, uint32_t _microIdx, 
-                       uint32_t _microml);
+        %(class_name)s(ExtMachInst _machInst, uint32_t _microIdx, uint64_t _rlen, uint64_t _mlen);
         
         Fault execute(ExecContext *, trace::InstRecord *) const override;
 
@@ -76,8 +77,7 @@ def template MatrixArithLineMicroDeclare {{
         RegId destRegIdxArr[1];
       public:
         %(class_name)s(ExtMachInst _machInst);
-        %(class_name)s(ExtMachInst _machInst, uint32_t _microIdx, 
-                       uint32_t _microml);
+        %(class_name)s(ExtMachInst _machInst, uint32_t _microIdx, uint64_t _rlen, uint64_t _mlen);
         
         Fault execute(ExecContext *, trace::InstRecord *) const override;
 
@@ -94,8 +94,7 @@ def template MatrixUnaryArithMicroDeclare {{
         RegId destRegIdxArr[1];
       public:
         %(class_name)s(ExtMachInst _machInst);
-        %(class_name)s(ExtMachInst _machInst, uint32_t _microIdx, 
-                       uint32_t _microml);
+        %(class_name)s(ExtMachInst _machInst, uint32_t _microIdx, uint64_t _rlen, uint64_t _mlen);
         
         Fault execute(ExecContext *, trace::InstRecord *) const override;
 
@@ -107,10 +106,9 @@ def template MatrixUnaryArithMicroDeclare {{
 
 def template MatrixArithMicroConstructor {{
 
-%(class_name)s::%(class_name)s(ExtMachInst _machInst, uint32_t _microIdx,
-                               uint32_t _microml)
+%(class_name)s::%(class_name)s(ExtMachInst _machInst, uint32_t _microIdx, uint64_t _rlen, uint64_t _mlen)
   : %(base_class)s(
-        "%(mnemonic)s", _machInst, %(op_class)s, _microIdx, _microml)
+        "%(mnemonic)s", _machInst, %(op_class)s, _microIdx, _rlen, _mlen)
 {
     %(set_reg_idx_arr)s;
     _numSrcRegs = 0;
@@ -126,10 +124,9 @@ def template MatrixArithMicroConstructor {{
 
 def template MatrixArithLineMicroConstructor {{
 
-%(class_name)s::%(class_name)s(ExtMachInst _machInst, uint32_t _microIdx,
-                               uint32_t _microml)
+%(class_name)s::%(class_name)s(ExtMachInst _machInst, uint32_t _microIdx, uint64_t _rlen, uint64_t _mlen)
   : %(base_class)s(
-        "%(mnemonic)s", _machInst, %(op_class)s, _microIdx, _microml)
+        "%(mnemonic)s", _machInst, %(op_class)s, _microIdx, _rlen, _mlen)
 {
     %(set_reg_idx_arr)s;
     _numSrcRegs = 0;
@@ -172,16 +169,14 @@ def template MatrixMoveMicroExecute {{
     {
         %(op_decl)s;
         %(op_rd)s;
-        %(set_rlenb)s;
 
-        uint32_t msew = 32;
-        uint32_t rows = rlenb / (msew / 8);
-        uint32_t i = microIdx;
+        // TODO: When ready, capture elen from parameters
+        const uint32_t rows = mlen / rlen;
+        const uint32_t cols = rlen / 32;
+
         for (int row = 0; row < rows; row++) {
-            int consumed = rows;
-            for(int k = 0; k < consumed; k++) {
+            for(int i = 0; i < cols; i++) {
                 %(code)s;
-                i++;
             }
         }
 
@@ -200,11 +195,13 @@ def template MatrixArithLineMicroExecute {{
     {
         %(op_decl)s
         %(op_rd)s
-        %(set_rlenb)s
 
-        for (int row = 0; row < 4; row++) {
-            for(int col = 0; col < 4; col++) {
-                %(code)s
+        const uint32_t rows = mlen / rlen;
+        const uint32_t cols = rlen / 32;
+
+        for (int row = 0; row < rows; row++) {
+            for(int col = 0; col < cols; col++) {
+                %(code)s;
             }
         }
 
@@ -224,8 +221,7 @@ def template MatrixLoadMicroDeclare {{
         RegId destRegIdxArr[1];
       public:
         %(class_name)s(ExtMachInst _machInst);
-        %(class_name)s(ExtMachInst _machInst, uint32_t _microIdx, 
-                       uint32_t _microml);
+        %(class_name)s(ExtMachInst _machInst, uint32_t _microIdx, uint64_t _rlen, uint64_t _mlen);
         
         Fault execute(ExecContext *, trace::InstRecord *) const override;
         Fault initiateAcc(ExecContext *, trace::InstRecord *) const override;
@@ -244,8 +240,7 @@ def template MatrixStridedLoadMicroDeclare {{
         RegId destRegIdxArr[1];
       public:
         %(class_name)s(ExtMachInst _machInst);
-        %(class_name)s(ExtMachInst _machInst, uint32_t _microIdx, 
-                       uint32_t _microml);
+        %(class_name)s(ExtMachInst _machInst, uint32_t _microIdx, uint64_t _rlen, uint64_t _mlen);
         
         Fault execute(ExecContext *, trace::InstRecord *) const override;
         Fault initiateAcc(ExecContext *, trace::InstRecord *) const override;
@@ -264,8 +259,7 @@ def template MatrixStoreMicroDeclare {{
         RegId destRegIdxArr[0];
       public:
         %(class_name)s(ExtMachInst _machInst);
-        %(class_name)s(ExtMachInst _machInst, uint32_t _microIdx, 
-                       uint32_t _microml);
+        %(class_name)s(ExtMachInst _machInst, uint32_t _microIdx, uint64_t _rlen, uint64_t _mlen);
         
         Fault execute(ExecContext *, trace::InstRecord *) const override;
         Fault initiateAcc(ExecContext *, trace::InstRecord *) const override;
@@ -285,8 +279,7 @@ def template MatrixStridedStoreMicroDeclare {{
         RegId destRegIdxArr[1];
       public:
         %(class_name)s(ExtMachInst _machInst);
-        %(class_name)s(ExtMachInst _machInst, uint32_t _microIdx, 
-                       uint32_t _microml);
+        %(class_name)s(ExtMachInst _machInst, uint32_t _microIdx, uint64_t _rlen, uint64_t _mlen);
         
         Fault execute(ExecContext *, trace::InstRecord *) const override;
         Fault initiateAcc(ExecContext *, trace::InstRecord *) const override;
@@ -307,7 +300,8 @@ def template MatrixLoadMicroExecute {{
 
         %(op_decl)s;
         %(op_rd)s;
-        %(set_rlenb)s;
+
+        // TODO: Add implementation
 
         if (microIdx == 0)
             cmd.print();
@@ -317,7 +311,6 @@ def template MatrixLoadMicroExecute {{
     }
 }};
 
-// TODO: Update this Execute definition
 def template MatrixStridedLoadMicroExecute {{
     Fault
     %(class_name)s::execute(ExecContext *xc,
@@ -327,14 +320,14 @@ def template MatrixStridedLoadMicroExecute {{
 
         %(op_decl)s;
         %(op_rd)s;
-        %(set_rlenb)s;
 
-        // for loop replaces the microIdx
-        for (uint32_t i = 0; i < 4; i++) {
-            // TODO: Get Address from decoder.isa
+        const uint32_t rows = mlen / rlen;
+        const uint32_t cols = rlen / 32;
+
+        for (uint32_t i = 0; i < rows; i++) {
             %(ea_code)s
 
-            const size_t mem_size = 4 * 4;
+            const size_t mem_size = cols * 4;
             std::vector<bool> byte_enable(mem_size, true);
             Fault fault = xc->readMem(EA, Mem.as<uint8_t>(), mem_size, 
                                           memAccessFlags, byte_enable);
@@ -342,8 +335,7 @@ def template MatrixStridedLoadMicroExecute {{
             if (fault != NoFault)
                 return fault;
             
-            // % (code)s // Move code to decoder.isa
-            for (int k = 0; k < 4; k++) {
+            for (int k = 0; k < cols; k++) {
                 %(code)s
             }
         }
@@ -358,12 +350,11 @@ def template MatrixStoreMicroExecute {{
     %(class_name)s::execute(ExecContext *xc,
         trace::InstRecord *traceData) const
     {
-        [[maybe_unused]] Addr EA;
-
         %(op_decl)s;
         %(op_rd)s;
-        %(set_rlenb)s;
-        
+
+        // TODO: Add Implementation
+
         return NoFault;
     }
 }};
@@ -377,15 +368,17 @@ def template MatrixStridedStoreMicroExecute {{
 
         %(op_decl)s;
         %(op_rd)s;
-        %(set_rlenb)s;
 
-        for (uint32_t i = 0; i < 4; i++) {
+        const uint32_t rows = mlen / rlen;
+        const uint32_t cols = rlen / 32;
+
+        for (uint32_t i = 0; i < rows; i++) {
             %(ea_code)s
 
-            const size_t mem_size = 4 * 4;
+            const size_t mem_size = cols * 4;
             std::vector<bool> byte_enable(mem_size, true);
 
-            for (int k = 0; k < 4; k++) {
+            for (int k = 0; k < cols; k++) {
                 Mem.as<uint32_t>()[k] = Mrs3[k + i * 4];
             }
 
@@ -406,12 +399,14 @@ def template MatrixLoadMicroInitiateAcc{{
         [[maybe_unused]] Addr EA;
         %(op_decl)s;
         %(op_rd)s;
-        %(set_rlenb)s;
 
+        
         %(ea_code)s;
 
-        // Since there are no microops, gets 16 contiguous positions
-        const size_t mem_size = 16 * 4;
+        const uint32_t rows = mlen / rlen;
+        const uint32_t cols = rlen / 32;
+
+        const size_t mem_size = rows * cols * 4;
         std::vector<bool> byte_enable(mem_size, true);
 
         Fault fault = initiateMemRead(xc, EA, mem_size, memAccessFlags,
@@ -434,14 +429,18 @@ def template MatrixLoadMicroCompleteAcc{{
     %(class_name)s::completeAcc(PacketPtr pkt, ExecContext *xc,
         trace::InstRecord *traceData) const
     {
-        %(op_decl)s;
-        %(op_rd)s;
-        %(set_rlenb)s;
+        %(op_decl)s
+        %(op_rd)s
+        
+        const uint32_t rows = mlen / rlen;
+        const uint32_t cols = rlen / 32;
 
         memcpy(Mem.as<uint8_t>(), pkt->getPtr<uint8_t>(), pkt->getSize());
         
-        for (int k = 0; k < 16; k++) {
-            Mrd[k] = Mem.as<uint32_t>()[k];
+        for (int k = 0; k < (cols * rows); k++) {
+            // TODO: Get this from decoder.isa
+            %(code)s
+            // Mrd[k] = Mem.as<uint32_t>()[k];
         }
 
         DPRINTF(MatRegs, "0x%x: %llu: completeAcc :%s \n", 
@@ -461,20 +460,18 @@ def template MatrixStoreMicroInitiateAcc{{
         trace::InstRecord *traceData) const
     {
         Addr EA;
+        %(op_decl)s
+        %(op_rd)s
 
-        %(op_decl)s;
-        %(op_rd)s;
-        %(set_rlenb)s;
+        %(ea_code)s
+        
+        const uint32_t rows = mlen / rlen;
+        const uint32_t cols = rlen / 32;
 
-        %(ea_code)s;
-
-        // TODO: Get 16 from rlen
-        const size_t mem_size = 16 * 4;
+        const size_t mem_size = cols * rows * 4;
         std::vector<bool> byte_enable(mem_size, true);
 
-        // TODO: Get 16 from rlen
-        // TODO: Use memcpy
-        for (int k = 0; k < 16; k++) {
+        for (int k = 0; k < (cols * rows); k++) {
             %(code)s;
         }
 
@@ -494,22 +491,26 @@ def template MatrixStridedStoreMicroInitiateAcc{{
     {
         [[maybe_unused]] Addr EA;
 
-        %(op_decl)s;
-        %(op_rd)s;
-        %(set_rlenb)s;
-
+        %(op_decl)s
+        %(op_rd)s
+        
+        const uint32_t rows = mlen / rlen;
+        const uint32_t cols = rlen / 32;
         uint32_t i = microIdx;
 
-        EA = Rs1 + i * Rs2;
+        %(ea_code)s
 
-        const size_t mem_size = 4 * 4;
+        const size_t mem_size = cols * 4;
         std::vector<bool> byte_enable(mem_size, true);
 
-        for (int k = 0; k < 16; k++) {
+        for (int k = 0; k < (cols * rows); k++) {
+            // Copy input to output
             Mrd[k] = Mrs3[k];
         }
 
-        for (int k = 0; k < 4; k++) {
+        for (int k = 0; k < cols; k++) {
+            // Copy to memory
+            // TODO: Dá pra reusar o % (code)s, mas forçar i = zero no de cima
             Mem.as<uint32_t>()[k] = Mrs3[i * 4 + k];
         }
 
@@ -525,15 +526,14 @@ def template MatrixStridedLoadMicroInitiateAcc{{
         trace::InstRecord *traceData) const
     {
         [[maybe_unused]] Addr EA;
-        %(op_decl)s;
-        %(op_rd)s;
-        %(set_rlenb)s;
-
+        %(op_decl)s
+        %(op_rd)s
+        
         uint32_t i = microIdx;
-
+        const uint32_t cols = rlen / 32;
         %(ea_code)s
 
-        const size_t mem_size = 4 * 4;
+        const size_t mem_size = cols * 4;
         std::vector<bool> byte_enable(mem_size, true);
 
         Fault fault = initiateMemRead(xc, EA, mem_size, memAccessFlags,
@@ -549,23 +549,24 @@ def template MatrixStridedLoadMicroCompleteAcc{{
     {
         %(op_decl)s
         %(op_rd)s
-        %(set_rlenb)s
 
         uint32_t i = microIdx;
+        const uint32_t rows = mlen / rlen;
+        const uint32_t cols = rlen / 32;
 
-        const size_t mem_size = 4 * 4;
+        const size_t mem_size = cols * 4;
         std::vector<bool> byte_enable(mem_size, true);
 
         memcpy(Mem.as<uint8_t>(), pkt->getPtr<uint8_t>(), pkt->getSize());
         
         // Copy Mrs3 data to Mrd
-        for (int j = 0; j < 4; j++) {
-            for (int k = 0; k < 4; k++) {
+        for (int j = 0; j < rows; j++) {
+            for (int k = 0; k < cols; k++) {
                 %(cp_code)s
             }
         }
 
-        for (int k = 0; k < 4; k++) {
+        for (int k = 0; k < cols; k++) {
             %(code)s
         }
 
@@ -600,16 +601,15 @@ def template MatrixDecode {{
 }};
 
 def template MatrixRlenDecode {{
-    return new %(class_name)s(machInst, rlen, microml);
+    return new %(class_name)s(machInst, rlen, mlen);
 }};
 
 
 def template MatrixLoadMicroConstructor {{
 
-%(class_name)s::%(class_name)s(ExtMachInst _machInst, uint32_t _microIdx,
-                               uint32_t _microml)
+%(class_name)s::%(class_name)s(ExtMachInst _machInst, uint32_t _microIdx, uint64_t _rlen, uint64_t _mlen)
   : %(base_class)s(
-        "%(mnemonic)s", _machInst, %(op_class)s, _microIdx, _microml)
+        "%(mnemonic)s", _machInst, %(op_class)s, _microIdx, _rlen, _mlen)
 {
     %(set_reg_idx_arr)s;
     _numSrcRegs = 0;
@@ -632,10 +632,9 @@ def template MatrixLoadMicroConstructor {{
 
 def template MatrixStridedLoadMicroConstructor {{
 
-%(class_name)s::%(class_name)s(ExtMachInst _machInst, uint32_t _microIdx,
-                               uint32_t _microml)
+%(class_name)s::%(class_name)s(ExtMachInst _machInst, uint32_t _microIdx, uint64_t _rlen, uint64_t _mlen)
   : %(base_class)s(
-        "%(mnemonic)s", _machInst, %(op_class)s, _microIdx, _microml)
+        "%(mnemonic)s", _machInst, %(op_class)s, _microIdx, _rlen, _mlen)
 {
     %(set_reg_idx_arr)s;
     _numSrcRegs = 0;
@@ -658,10 +657,9 @@ def template MatrixStridedLoadMicroConstructor {{
 
 def template MatrixStoreMicroConstructor {{
 
-%(class_name)s::%(class_name)s(ExtMachInst _machInst, uint32_t _microIdx,
-                               uint32_t _microml)
+%(class_name)s::%(class_name)s(ExtMachInst _machInst, uint32_t _microIdx, uint64_t _rlen, uint64_t _mlen)
   : %(base_class)s(
-        "%(mnemonic)s", _machInst, %(op_class)s, _microIdx, _microml)
+        "%(mnemonic)s", _machInst, %(op_class)s, _microIdx, _rlen, _mlen)
 {
     %(set_reg_idx_arr)s;
     _numSrcRegs = 0;
@@ -683,10 +681,9 @@ def template MatrixStoreMicroConstructor {{
 
 def template MatrixStridedStoreMicroConstructor {{
 
-%(class_name)s::%(class_name)s(ExtMachInst _machInst, uint32_t _microIdx,
-                               uint32_t _microml)
+%(class_name)s::%(class_name)s(ExtMachInst _machInst, uint32_t _microIdx, uint64_t _rlen, uint64_t _mlen)
   : %(base_class)s(
-        "%(mnemonic)s", _machInst, %(op_class)s, _microIdx, _microml)
+        "%(mnemonic)s", _machInst, %(op_class)s, _microIdx, _rlen, _mlen)
 {
     %(set_reg_idx_arr)s;
     _numSrcRegs = 0;
@@ -716,8 +713,7 @@ def template MatrixMoveMicroDeclare {{
         RegId destRegIdxArr[1];
       public:
         %(class_name)s(ExtMachInst _machInst);
-        %(class_name)s(ExtMachInst _machInst, uint32_t _microIdx, 
-                       uint32_t _microml);
+        %(class_name)s(ExtMachInst _machInst, uint32_t _microIdx, uint64_t _rlen, uint64_t _mlen);
         
         Fault execute(ExecContext *, trace::InstRecord *) const override;
 
@@ -728,10 +724,9 @@ def template MatrixMoveMicroDeclare {{
 
 def template MatrixMatrixMoveMicroConstructor {{
 
-%(class_name)s::%(class_name)s(ExtMachInst _machInst, uint32_t _microIdx,
-                               uint32_t _microml)
+%(class_name)s::%(class_name)s(ExtMachInst _machInst, uint32_t _microIdx, uint64_t _rlen, uint64_t _mlen)
   : %(base_class)s(
-        "%(mnemonic)s", _machInst, %(op_class)s, _microIdx, _microml)
+        "%(mnemonic)s", _machInst, %(op_class)s, _microIdx, _rlen, _mlen)
 {
     %(set_reg_idx_arr)s;
     _numSrcRegs = 0;
@@ -746,10 +741,9 @@ def template MatrixMatrixMoveMicroConstructor {{
 
 def template ScalarMatrixMoveMicroConstructor {{
 
-%(class_name)s::%(class_name)s(ExtMachInst _machInst, uint32_t _microIdx,
-                               uint32_t _microml)
+%(class_name)s::%(class_name)s(ExtMachInst _machInst, uint32_t _microIdx, uint64_t _rlen, uint64_t _mlen)
   : %(base_class)s(
-        "%(mnemonic)s", _machInst, %(op_class)s, _microIdx, _microml)
+        "%(mnemonic)s", _machInst, %(op_class)s, _microIdx, _rlen, _mlen)
 {
     %(set_reg_idx_arr)s;
     _numSrcRegs = 0;
@@ -771,10 +765,9 @@ def template ScalarMatrixMoveMicroConstructor {{
 
 def template FloatMatrixMoveMicroConstructor {{
 
-%(class_name)s::%(class_name)s(ExtMachInst _machInst, uint32_t _microIdx,
-                               uint32_t _microml)
+%(class_name)s::%(class_name)s(ExtMachInst _machInst, uint32_t _microIdx, uint64_t _rlen, uint64_t _mlen)
   : %(base_class)s(
-        "%(mnemonic)s", _machInst, %(op_class)s, _microIdx, _microml)
+        "%(mnemonic)s", _machInst, %(op_class)s, _microIdx, _rlen, _mlen)
 {
     %(set_reg_idx_arr)s;
     _numSrcRegs = 0;
