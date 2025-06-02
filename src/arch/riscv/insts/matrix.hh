@@ -280,6 +280,9 @@ class MatrixLoadMacroInst : public MatrixMemMacroInst {
     {
         this->flags[IsLoad] = true;
     }
+
+    std::string generateDisassembly(
+        Addr pc, const loader::SymbolTable *symtab) const override;
 };
 
 class MatrixLoadMicroInst : public MatrixMemMicroInst {
@@ -291,6 +294,9 @@ class MatrixLoadMicroInst : public MatrixMemMicroInst {
     {
         this->flags[IsLoad] = true;
     }
+
+    std::string generateDisassembly(
+        Addr pc, const loader::SymbolTable *symtab) const override;
 };
 
 class MatrixStridedLoadMicroInst : public MatrixMemMicroInst {

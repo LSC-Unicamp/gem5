@@ -5118,7 +5118,6 @@ decode QUADRANT default Unknown::unknown() {
                 // }});
                 // x[rs1] -> mr[md]
                 0x1: ScalarMatrixMoveOp::mmv_xmu({{
-                    // Mrs3_uw;
                     Mrd_uw[i] = Rs1_uw;
                 }});
                 // mr[ms1](0,0) -> x[rd]
@@ -5145,7 +5144,7 @@ decode QUADRANT default Unknown::unknown() {
                 // MAC
                 0x0: decode DT {
                     0x0: MatrixArithLineOp::mmacu({{
-                        int32_t acc = Mrs3_mc->as<uint32_t>()[row * 4 + col];
+                        uint32_t acc = Mrs3_mc->as<uint32_t>()[row * 4 + col];
                         for (int j = 0; j < 4; j++) {
                             acc += Mrs1_mc->as<uint32_t>()[row * 4 + j] * Mrs2_mc->as<uint32_t>()[col * 4 + j];
                         }
