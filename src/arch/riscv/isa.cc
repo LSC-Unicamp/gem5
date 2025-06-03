@@ -205,6 +205,7 @@ namespace RiscvISA
     [MISCREG_VLENB]         = "VLENB",
 
     [MISCREG_RLENB]        = "RLENB",
+    [MISCREG_MLENB]        = "MLENB",
 
     [MISCREG_NMIVEC]        = "NMIVEC",
     [MISCREG_NMIE]          = "NMIE",
@@ -624,6 +625,10 @@ ISA::readMiscReg(RegIndex idx)
       case MISCREG_RLENB:
         {
             return getRLenInBytes();
+        }
+      case MISCREG_MLENB:
+        {
+            return getMlenInBytes();
         }
       default:
         // Try reading HPM counters

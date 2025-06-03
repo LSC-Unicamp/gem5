@@ -196,6 +196,7 @@ class ISA : public BaseISA
     int64_t getVectorLengthInBytes() const override { return vlen >> 3; }
 
     unsigned getMlenInBits() { return mlen; }
+    unsigned getMlenInBytes() { return mlen >> 3; }
 
     unsigned getRLenInBits() { return rlen; }
     unsigned getRLenInBytes() { return rlen >> 3; }

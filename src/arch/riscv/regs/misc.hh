@@ -202,6 +202,7 @@ enum MiscRegIndex
     MISCREG_VLENB,
 
     MISCREG_RLENB,
+    MISCREG_MLENB,
 
     // These registers are not in the standard, hence does not exist in the
     // CSRData map. These are mainly used to provide a minimal implementation
@@ -514,7 +515,8 @@ enum CSRIndex
     CSR_VTYPE        = 0xC21,
     CSR_VLENB        = 0xC22,
 
-    CSR_RLENB        = 0xCC1
+    CSR_RLENB        = 0xCC1, // mlenb
+    CSR_MLENB        = 0xCC2  // mrowb
 };
 
 struct CSRMetadata
@@ -1186,9 +1188,12 @@ const std::unordered_map<int, CSRMetadata> CSRData = {
         {"vtype", MISCREG_VTYPE, rvTypeFlags(RV64, RV32), isaExtsFlags('v')}},
     {CSR_VLENB,
         {"VLENB", MISCREG_VLENB, rvTypeFlags(RV64, RV32), isaExtsFlags('v')}},
-    // 
+
+    // Matrix CSRs
     {CSR_RLENB,
-        {"RLENB", MISCREG_RLENB, rvTypeFlags(RV64, RV32), isaExtsFlags()}}
+        {"RLENB", MISCREG_RLENB, rvTypeFlags(RV64, RV32), isaExtsFlags()}},
+    {CSR_MLENB,
+        {"MLENB", MISCREG_MLENB, rvTypeFlags(RV64, RV32), isaExtsFlags()}}
 };
 
 /**
