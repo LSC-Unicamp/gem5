@@ -117,6 +117,8 @@ def template MatrixArithMicroConstructor {{
     _numTypedDestRegs[MatRegClass]++;
     setSrcRegIdx(_numSrcRegs++, matRegClass[_machInst.mrs1]);
     setSrcRegIdx(_numSrcRegs++, matRegClass[_machInst.mrs2]);
+
+    cmd.opcode = (_machInst.nf << 5) | (_machInst.dt << 3) | (_machInst.width);
 }
 
 }};
@@ -136,8 +138,6 @@ def template MatrixArithLineMicroConstructor {{
     setSrcRegIdx(_numSrcRegs++, matRegClass[_machInst.mrs1]);
     setSrcRegIdx(_numSrcRegs++, matRegClass[_machInst.mrs2]);
     setSrcRegIdx(_numSrcRegs++, matRegClass[_machInst.mrs3]);
-
-    cmd.opcode = MatrixCmd::Opcode::MMACU;
 }
 
 }};
@@ -305,7 +305,7 @@ def template MatrixLoadMicroExecute {{
         // TODO: Add implementation
 
         if (microIdx == 0)
-            cmd.print();
+            cmd.print(Rs1);
 
         %(op_wb)s;
         return NoFault;
@@ -342,7 +342,7 @@ def template MatrixStridedLoadMicroExecute {{
         }
 
         if (microIdx == 0)
-            cmd.print();
+            cmd.print(Rs1, Rs2);
 
         %(op_wb)s;
         return NoFault;
@@ -362,7 +362,7 @@ def template MatrixStoreMicroExecute {{
         // TODO: Add Implementation
 
         if (microIdx == 0)
-            cmd.print();
+            cmd.print(Rs1);
 
         return NoFault;
     }
@@ -396,10 +396,11 @@ def template MatrixStridedStoreMicroExecute {{
             if (fault != NoFault)
                 return fault;
         }
-        return NoFault;
 
         if (microIdx == 0)
-            cmd.print();
+            cmd.print(Rs1, Rs2);
+
+        return NoFault;
     }
 }};
 
@@ -527,7 +528,7 @@ def template MatrixStridedStoreMicroInitiateAcc{{
         }
 
         if (microIdx == 0)
-            cmd.print();
+            cmd.print(Rs1, Rs2);
 
         Fault fault = xc->writeMem((uint8_t*) &Mem, mem_size, EA, memAccessFlags,
                                 nullptr, byte_enable);
@@ -552,7 +553,7 @@ def template MatrixStridedLoadMicroInitiateAcc{{
         std::vector<bool> byte_enable(mem_size, true);
 
         if (microIdx == 0)
-            cmd.print();
+            cmd.print(Rs1, Rs2);
 
         Fault fault = initiateMemRead(xc, EA, mem_size, memAccessFlags,
                                 byte_enable);
@@ -635,7 +636,7 @@ def template MatrixLoadMicroConstructor {{
     setSrcRegIdx(_numSrcRegs++, intRegClass[_machInst.rs2]);
     setSrcRegIdx(_numSrcRegs++, matRegClass[_machInst.mrs3]);
 
-    cmd.opcode = MatrixCmd::Opcode::ML;
+    cmd.opcode = (_machInst.nf << 5) | (_machInst.width);
     cmd.ms1 = MatrixCmd::Register::M0;
     cmd.ms2 = MatrixCmd::Register::M0;
     cmd.ms1sew = MatrixCmd::SEW::_1;
@@ -660,7 +661,7 @@ def template MatrixStridedLoadMicroConstructor {{
     setSrcRegIdx(_numSrcRegs++, intRegClass[_machInst.rs2]);
     setSrcRegIdx(_numSrcRegs++, matRegClass[_machInst.mrs3]);
 
-    cmd.opcode = MatrixCmd::Opcode::MLS;
+    cmd.opcode = (_machInst.nf << 5) | (_machInst.width);
     cmd.ms1 = MatrixCmd::Register::M0;
     cmd.ms2 = MatrixCmd::Register::M0;
     cmd.ms1sew = MatrixCmd::SEW::_1;
@@ -684,7 +685,7 @@ def template MatrixStoreMicroConstructor {{
     setSrcRegIdx(_numSrcRegs++, intRegClass[_machInst.rs2]);
     this->flags[IsStore] = true;
 
-    cmd.opcode = MatrixCmd::Opcode::MS;
+    cmd.opcode = (_machInst.nf << 5) | (_machInst.width);
     cmd.ms1 = MatrixCmd::Register::M0;
     cmd.ms2 = MatrixCmd::Register::M0;
     cmd.ms1sew = MatrixCmd::SEW::_1;
@@ -710,7 +711,7 @@ def template MatrixStridedStoreMicroConstructor {{
     _numTypedDestRegs[MatRegClass]++;
     this->flags[IsStore] = true;
 
-    cmd.opcode = MatrixCmd::Opcode::MSS;
+    cmd.opcode = (_machInst.nf << 5) | (_machInst.width);
     cmd.ms1 = MatrixCmd::Register::M0;
     cmd.ms2 = MatrixCmd::Register::M0;
     cmd.ms1sew = MatrixCmd::SEW::_1;
@@ -768,7 +769,7 @@ def template ScalarMatrixMoveMicroConstructor {{
     setSrcRegIdx(_numSrcRegs++, intRegClass[_machInst.rs1]);
     setSrcRegIdx(_numSrcRegs++, matRegClass[_machInst.mrs3]);
 
-    cmd.opcode = MatrixCmd::Opcode::MZERO;
+    cmd.opcode = (_machInst.nf << 5) | (_machInst.mrs2);
     cmd.ms1 = MatrixCmd::Register::M0;
     cmd.ms2 = MatrixCmd::Register::M0;
     cmd.ms1sew = MatrixCmd::SEW::_1;

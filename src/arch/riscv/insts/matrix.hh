@@ -19,23 +19,6 @@ namespace RiscvISA
 {
 
 struct MatrixCmd {
-  enum Opcode {
-    ML = 0x20,
-    MS = 0x21,
-    MLS = 0x24,
-    MSS = 0x25,
-    MZERO = 0x41,
-    MMACU = 0x60,
-    MADDU = 0x61,
-    MSUBU = 0x62,
-    MMAC = 0x68,
-    MADD = 0x69,
-    MSUB = 0x6A,
-    MMACF = 0x70,
-    MADDF = 0x71,
-    MSUBF = 0x72,
-  };
-
   enum Register {
     M0 = 0,
     M1,
@@ -82,7 +65,7 @@ struct MatrixCmd {
     _128,
   };
 
-  Opcode opcode : 8;
+  unsigned opcode : 8;
   Register md : 5;
   Register ms1 : 5;
   Register ms2 : 5;
@@ -99,7 +82,7 @@ struct MatrixCmd {
   uint64_t unused2 : 64;
 
   MatrixCmd() {
-    opcode = Opcode::ML;
+    opcode = 0;
     md = Register::M0;
     ms1 = Register::M0;
     ms2 = Register::M0;
