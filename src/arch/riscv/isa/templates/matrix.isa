@@ -138,6 +138,8 @@ def template MatrixArithLineMicroConstructor {{
     setSrcRegIdx(_numSrcRegs++, matRegClass[_machInst.mrs1]);
     setSrcRegIdx(_numSrcRegs++, matRegClass[_machInst.mrs2]);
     setSrcRegIdx(_numSrcRegs++, matRegClass[_machInst.mrs3]);
+
+    cmd.opcode = (_machInst.nf << 5) | (_machInst.dt << 3) | (_machInst.width);
 }
 
 }};
