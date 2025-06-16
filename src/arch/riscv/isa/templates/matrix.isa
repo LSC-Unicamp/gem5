@@ -299,17 +299,32 @@ def template MatrixLoadMicroExecute {{
     %(class_name)s::execute(ExecContext *xc,
         trace::InstRecord *traceData) const
     {
-        [[maybe_unused]] Addr EA;
+        Addr EA;
+        %(op_decl)s
+        %(op_rd)s
+        
+        %(ea_code)s
 
-        %(op_decl)s;
-        %(op_rd)s;
+        const uint32_t rows = mlen / rlen;
+        const uint32_t cols = rlen / 32;
 
-        // TODO: Add implementation
+        const size_t mem_size = rows * cols * 4;
+        std::vector<bool> byte_enable(mem_size, true);
 
+        Fault fault = xc->readMem(EA, Mem.as<uint8_t>(), mem_size, memAccessFlags,
+                                byte_enable);
+
+        if (fault != NoFault)
+                return fault;
+        
+        for (int k = 0; k < (cols * rows); k++) {
+            %(code)s
+        }
+        
         if (microIdx == 0)
             cmd.print(Rs1);
-
-        %(op_wb)s;
+        
+        %(op_wb)s
         return NoFault;
     }
 }};
@@ -319,8 +334,7 @@ def template MatrixStridedLoadMicroExecute {{
     %(class_name)s::execute(ExecContext *xc,
         trace::InstRecord *traceData) const
     {
-        [[maybe_unused]] Addr EA;
-
+        Addr EA;
         %(op_decl)s;
         %(op_rd)s;
 
@@ -356,17 +370,29 @@ def template MatrixStoreMicroExecute {{
     %(class_name)s::execute(ExecContext *xc,
         trace::InstRecord *traceData) const
     {
-        %(op_decl)s;
-        %(op_rd)s;
-        %(set_rlenb)s;
-        
+        Addr EA;
+        %(op_decl)s
+        %(op_rd)s
 
-        // TODO: Add Implementation
+        %(ea_code)s
+        
+        const uint32_t rows = mlen / rlen;
+        const uint32_t cols = rlen / 32;
+
+        const size_t mem_size = cols * rows * 4;
+        std::vector<bool> byte_enable(mem_size, true);
+
+        for (int k = 0; k < (cols * rows); k++) {
+            %(code)s
+        }
+
+        Fault fault = xc->writeMem(Mem.as<uint8_t>(), mem_size, EA, memAccessFlags,
+                                nullptr, byte_enable);
 
         if (microIdx == 0)
             cmd.print(Rs1);
 
-        return NoFault;
+        return fault;
     }
 }};
 
@@ -411,10 +437,9 @@ def template MatrixLoadMicroInitiateAcc{{
     %(class_name)s::initiateAcc(ExecContext *xc,
         trace::InstRecord *traceData) const
     {
-        [[maybe_unused]] Addr EA;
+        Addr EA;
         %(op_decl)s;
         %(op_rd)s;
-
         
         %(ea_code)s;
 
@@ -453,9 +478,7 @@ def template MatrixLoadMicroCompleteAcc{{
         memcpy(Mem.as<uint8_t>(), pkt->getPtr<uint8_t>(), pkt->getSize());
         
         for (int k = 0; k < (cols * rows); k++) {
-            // TODO: Get this from decoder.isa
             %(code)s
-            // Mrd[k] = Mem.as<uint32_t>()[k];
         }
 
         DPRINTF(MatRegs, "0x%x: %llu: completeAcc :%s \n", 
@@ -464,7 +487,7 @@ def template MatrixLoadMicroCompleteAcc{{
             generateDisassembly(0, nullptr)
         );
 
-        %(op_wb)s;
+        %(op_wb)s
         return NoFault;
     }
 }};
@@ -490,11 +513,12 @@ def template MatrixStoreMicroInitiateAcc{{
             %(code)s;
         }
 
+        Fault fault = xc->writeMem((uint8_t*) &Mem, mem_size, EA, memAccessFlags,
+                                nullptr, byte_enable);
+
         if (microIdx == 0)
             cmd.print(Rs1);
 
-        Fault fault = xc->writeMem((uint8_t*) &Mem, mem_size, EA, memAccessFlags,
-                                nullptr, byte_enable);
         return fault;
     }
 }};
@@ -504,7 +528,7 @@ def template MatrixStridedStoreMicroInitiateAcc{{
     %(class_name)s::initiateAcc(ExecContext *xc,
         trace::InstRecord *traceData) const
     {
-        [[maybe_unused]] Addr EA;
+        Addr EA;
 
         %(op_decl)s
         %(op_rd)s
@@ -528,9 +552,6 @@ def template MatrixStridedStoreMicroInitiateAcc{{
             // TODO: Dá pra reusar o % (code)s, mas forçar i = zero no de cima
             Mem.as<uint32_t>()[k] = Mrs3[i * 4 + k];
         }
-
-        if (microIdx == 0)
-            cmd.print(Rs1, Rs2);
 
         Fault fault = xc->writeMem((uint8_t*) &Mem, mem_size, EA, memAccessFlags,
                                 nullptr, byte_enable);
@@ -601,6 +622,12 @@ def template MatrixStoreMicroCompleteAcc{{
     %(class_name)s::completeAcc(PacketPtr pkt, ExecContext *xc,
         trace::InstRecord *traceData) const
     {
+        %(op_decl)s
+        %(op_rd)s
+
+        if (microIdx == 0)
+            cmd.print(Rs1);
+
         return NoFault;
     }
 }};
@@ -610,6 +637,12 @@ def template MatrixStridedStoreMicroCompleteAcc{{
     %(class_name)s::completeAcc(PacketPtr pkt, ExecContext *xc,
         trace::InstRecord *traceData) const
     {
+        %(op_decl)s
+        %(op_rd)s
+
+        if (microIdx == 0)
+            cmd.print(Rs1, Rs2);
+
         return NoFault;
     }
 }};
