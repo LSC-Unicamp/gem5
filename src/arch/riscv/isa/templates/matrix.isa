@@ -158,8 +158,8 @@ def template MatrixArithMicroExecute {{
 
         %(code)s;
 
-        if (microIdx == 0)
-            cmd.print();
+        if (traceData)
+            cmd.set(traceData->csiData);
 
         %(op_wb)s;
         return NoFault;
@@ -183,8 +183,8 @@ def template MatrixMoveMicroExecute {{
             %(code)s;
         }
 
-        if (microIdx == 0)
-            cmd.print();
+        if (traceData)
+            cmd.set(traceData->csiData);
 
         %(op_wb)s;
         return NoFault;
@@ -208,8 +208,8 @@ def template MatrixArithLineMicroExecute {{
             }
         }
 
-        if (microIdx == 0)
-            cmd.print();
+        if (traceData)
+            cmd.set(traceData->csiData);
 
         %(op_wb)s
         return NoFault;
@@ -315,14 +315,14 @@ def template MatrixLoadMicroExecute {{
                                 byte_enable);
 
         if (fault != NoFault)
-                return fault;
+            return fault;
         
         for (int k = 0; k < (cols * rows); k++) {
             %(code)s
         }
         
-        if (microIdx == 0)
-            cmd.print(Rs1);
+        if (traceData)
+            cmd.set(traceData->csiData, Rs1);
         
         %(op_wb)s
         return NoFault;
@@ -357,8 +357,8 @@ def template MatrixStridedLoadMicroExecute {{
             }
         }
 
-        if (microIdx == 0)
-            cmd.print(Rs1, Rs2);
+        if (traceData)
+            cmd.set(traceData->csiData, Rs1, Rs2);
 
         %(op_wb)s;
         return NoFault;
@@ -389,8 +389,8 @@ def template MatrixStoreMicroExecute {{
         Fault fault = xc->writeMem(Mem.as<uint8_t>(), mem_size, EA, memAccessFlags,
                                 nullptr, byte_enable);
 
-        if (microIdx == 0)
-            cmd.print(Rs1);
+        if (traceData)
+            cmd.set(traceData->csiData, Rs1);
 
         return fault;
     }
@@ -425,8 +425,8 @@ def template MatrixStridedStoreMicroExecute {{
                 return fault;
         }
 
-        if (microIdx == 0)
-            cmd.print(Rs1, Rs2);
+        if (traceData)
+            cmd.set(traceData->csiData, Rs1, Rs2);
 
         return NoFault;
     }
@@ -452,8 +452,11 @@ def template MatrixLoadMicroInitiateAcc{{
         Fault fault = initiateMemRead(xc, EA, mem_size, memAccessFlags,
                                 byte_enable);
         
-        if (microIdx == 0)
-            cmd.print(Rs1);
+        if (fault != NoFault)
+            return fault;
+
+        if (traceData)
+            cmd.set(traceData->csiData, Rs1);
 
         DPRINTF(MatRegs, "0x%x: %llu: initiateAcc :%s \n", 
             xc->tcBase()->pcState().instAddr(), 
@@ -516,8 +519,11 @@ def template MatrixStoreMicroInitiateAcc{{
         Fault fault = xc->writeMem((uint8_t*) &Mem, mem_size, EA, memAccessFlags,
                                 nullptr, byte_enable);
 
-        if (microIdx == 0)
-            cmd.print(Rs1);
+        if (fault != NoFault)
+            return fault;
+
+        if (traceData)
+            cmd.set(traceData->csiData, Rs1);
 
         return fault;
     }
@@ -553,6 +559,10 @@ def template MatrixStridedStoreMicroInitiateAcc{{
             Mem.as<uint32_t>()[k] = Mrs3[i * 4 + k];
         }
 
+        if (traceData)
+            cmd.set(traceData->csiData, Rs1, Rs2);
+            
+
         Fault fault = xc->writeMem((uint8_t*) &Mem, mem_size, EA, memAccessFlags,
                                 nullptr, byte_enable);
         return fault;
@@ -575,8 +585,8 @@ def template MatrixStridedLoadMicroInitiateAcc{{
         const size_t mem_size = cols * 4;
         std::vector<bool> byte_enable(mem_size, true);
 
-        if (microIdx == 0)
-            cmd.print(Rs1, Rs2);
+        if (traceData)
+            cmd.set(traceData->csiData, Rs1, Rs2);
 
         Fault fault = initiateMemRead(xc, EA, mem_size, memAccessFlags,
                                 byte_enable);
@@ -625,8 +635,8 @@ def template MatrixStoreMicroCompleteAcc{{
         %(op_decl)s
         %(op_rd)s
 
-        if (microIdx == 0)
-            cmd.print(Rs1);
+        if (traceData)
+            cmd.set(traceData->csiData, Rs1);
 
         return NoFault;
     }
@@ -640,8 +650,8 @@ def template MatrixStridedStoreMicroCompleteAcc{{
         %(op_decl)s
         %(op_rd)s
 
-        if (microIdx == 0)
-            cmd.print(Rs1, Rs2);
+        if (traceData)
+            cmd.set(traceData->csiData, Rs1, Rs2);
 
         return NoFault;
     }

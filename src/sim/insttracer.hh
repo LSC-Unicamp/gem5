@@ -286,6 +286,8 @@ class InstRecord
 
     virtual void dump() = 0;
 
+    uint64_t csiData[4];
+
   public:
     Tick getWhen() const { return when; }
     ThreadContext *getThread() const { return thread; }

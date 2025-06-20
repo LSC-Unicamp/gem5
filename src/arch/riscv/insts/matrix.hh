@@ -99,20 +99,21 @@ struct MatrixCmd {
     unused2 = 0;
   }
 
-  void print() const {
-    print(addr, stride);
+  void set(uint64_t dest[4]) const {
+    set(dest, addr, stride);
   }
 
-  void print(unsigned long _addr) const {
-    print(_addr, stride);
+  void set(uint64_t dest[4], unsigned long _addr) const {
+    set(dest, _addr, stride);
   }
 
-  void print(unsigned long _addr, unsigned long _stride) const {
-    DPRINTF(MatrixCmd, "MatrixCmd: 0x%016x%016x%016x%016x \n",
-      ((uint64_t) opcode << 56) | ((uint64_t) md << 51) | ((uint64_t) ms1 << 46) | ((uint64_t) ms2 << 41) |
-      ((uint64_t) mrm << 40) | ((uint64_t) mdsew << 36) | ((uint64_t) ms1sew << 32) | ((uint64_t) ms2sew << 28) |
-      ((uint64_t) unused << 24) | ((uint64_t) m << 16) | ((uint64_t) n << 8) | k,
-      _addr, _stride, unused2);
+  void set(uint64_t dest[4], unsigned long _addr, unsigned long _stride) const {
+    dest[0] = ((uint64_t) opcode << 56) | ((uint64_t) md << 51) | ((uint64_t) ms1 << 46) | ((uint64_t) ms2 << 41) |
+              ((uint64_t) mrm << 40) | ((uint64_t) mdsew << 36) | ((uint64_t) ms1sew << 32) | ((uint64_t) ms2sew << 28) |
+              ((uint64_t) unused << 24) | ((uint64_t) m << 16) | ((uint64_t) n << 8) | k,
+    dest[1] = _addr;
+    dest[2] = _stride;
+    dest[3] = unused2;
   }
 };
 
