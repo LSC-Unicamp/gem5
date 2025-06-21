@@ -5165,30 +5165,30 @@ decode QUADRANT default Unknown::unknown() {
                         Mrd_sf[row * 4 + col] = acc;
                     }});
                 }
-//                 // ADD
-//                 0x1: decode DT {
-//                     0x0: MatrixArithOp::maddu({{
-//                         Mrd_uw[i] = Mrs1_uw[i] + Mrs2_uw[i];
-//                     }});
-//                     0x1: MatrixArithOp::madd({{
-//                         Mrd_sw[i] = Mrs1_sw[i] + Mrs2_sw[i];
-//                     }});
-//                     0x2: MatrixArithOp::maddf({{
-//                         Mrd_sf[i] = Mrs1_sf[i] + Mrs2_sf[i];
-//                     }});
-//                 }
-//                 // SUB
-//                 0x2: decode DT {
-//                     0x0: MatrixArithOp::msubu({{
-//                         Mrd_uw[i] = Mrs1_uw[i] - Mrs2_uw[i];
-//                     }});
-//                     0x1: MatrixArithOp::msub({{
-//                         Mrd_sw[i] = Mrs1_sw[i] - Mrs2_sw[i];
-//                     }});
-//                     0x2: MatrixArithOp::msubf({{
-//                         Mrd_sf[i] = Mrs1_sf[i] - Mrs2_sf[i];
-//                     }});
-//                 }
+                // ADD
+                0x1: decode DT {
+                    0x0: MatrixArithOp::maddu({{
+                        Mrd_uw[i] = Mrs1_uw[i] + Mrs2_uw[i];
+                    }});
+                    0x1: MatrixArithOp::madd({{
+                        Mrd_sw[i] = Mrs1_sw[i] + Mrs2_sw[i];
+                    }});
+                    0x2: MatrixArithOp::maddf({{
+                        Mrd_sf[i] = Mrs1_sf[i] + Mrs2_sf[i];
+                    }});
+                }
+                // SUB
+                0x2: decode DT {
+                    0x0: MatrixArithOp::msubu({{
+                        Mrd_uw[i] = Mrs1_uw[i] - Mrs2_uw[i];
+                    }});
+                    0x1: MatrixArithOp::msub({{
+                        Mrd_sw[i] = Mrs1_sw[i] - Mrs2_sw[i];
+                    }});
+                    0x2: MatrixArithOp::msubf({{
+                        Mrd_sf[i] = Mrs1_sf[i] - Mrs2_sf[i];
+                    }});
+                }
             }
         }
 
