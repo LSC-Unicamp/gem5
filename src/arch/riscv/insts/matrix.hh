@@ -19,23 +19,6 @@ namespace RiscvISA
 {
 
 struct MatrixCmd {
-  enum Opcode {
-    ML = 0x20,
-    MS = 0x21,
-    MLS = 0x24,
-    MSS = 0x25,
-    MZERO = 0x41,
-    MMACU = 0x60,
-    MADDU = 0x61,
-    MSUBU = 0x62,
-    MMAC = 0x68,
-    MADD = 0x69,
-    MSUB = 0x6A,
-    MMACF = 0x70,
-    MADDF = 0x71,
-    MSUBF = 0x72,
-  };
-
   enum Register {
     M0 = 0,
     M1,
@@ -82,7 +65,7 @@ struct MatrixCmd {
     _128,
   };
 
-  Opcode opcode : 8;
+  unsigned opcode : 8;
   Register md : 5;
   Register ms1 : 5;
   Register ms2 : 5;
@@ -99,7 +82,7 @@ struct MatrixCmd {
   uint64_t unused2 : 64;
 
   MatrixCmd() {
-    opcode = Opcode::ML;
+    opcode = 0;
     md = Register::M0;
     ms1 = Register::M0;
     ms2 = Register::M0;
@@ -116,20 +99,21 @@ struct MatrixCmd {
     unused2 = 0;
   }
 
-  void print() const {
-    print(addr, stride);
+  void set(uint64_t dest[4]) const {
+    set(dest, addr, stride);
   }
 
-  void print(unsigned long _addr) const {
-    print(_addr, stride);
+  void set(uint64_t dest[4], unsigned long _addr) const {
+    set(dest, _addr, stride);
   }
 
-  void print(unsigned long _addr, unsigned long _stride) const {
-    DPRINTF(MatrixCmd, "MatrixCmd: %#016x%016x%016x%016x \n",
-      ((uint64_t) opcode << 56) | ((uint64_t) md << 51) | ((uint64_t) ms1 << 46) | ((uint64_t) ms2 << 41) |
-      ((uint64_t) mrm << 40) | ((uint64_t) mdsew << 36) | ((uint64_t) ms1sew << 32) | ((uint64_t) ms2sew << 28) |
-      ((uint64_t) unused << 24) | ((uint64_t) m << 16) | ((uint64_t) n << 8) | k,
-      _addr, _stride, unused2);
+  void set(uint64_t dest[4], unsigned long _addr, unsigned long _stride) const {
+    dest[0] = ((uint64_t) opcode << 56) | ((uint64_t) md << 51) | ((uint64_t) ms1 << 46) | ((uint64_t) ms2 << 41) |
+              ((uint64_t) mrm << 40) | ((uint64_t) mdsew << 36) | ((uint64_t) ms1sew << 32) | ((uint64_t) ms2sew << 28) |
+              ((uint64_t) unused << 24) | ((uint64_t) m << 16) | ((uint64_t) n << 8) | k,
+    dest[1] = _addr;
+    dest[2] = _stride;
+    dest[3] = unused2;
   }
 };
 

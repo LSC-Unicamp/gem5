@@ -49,6 +49,7 @@
 #include "cpu/static_inst.hh"
 #include "cpu/thread_context.hh"
 #include "debug/ExecAll.hh"
+#include "debug/MatrixCmd.hh"
 #include "debug/FmtTicksOff.hh"
 #include "enums/OpClass.hh"
 
@@ -155,6 +156,13 @@ ExeTracerRecord::traceInst(const StaticInstPtr &inst, bool ran)
 }
 
 void
+ExeTracerRecord::traceCSI(const StaticInstPtr &inst, bool ran) {
+    trace::getDebugLogger()->dprintf_flag(
+    when, thread->getCpuPtr()->name(), "MatrixCmd", "0x%016x%016x%016x%016x \n",
+    this->csiData[0], this->csiData[1], this->csiData[2], this->csiData[3]);
+}
+
+void
 ExeTracerRecord::dump()
 {
     /*
@@ -174,6 +182,9 @@ ExeTracerRecord::dump()
     }
     if (debug::ExecMicro || !staticInst->isMicroop()) {
         traceInst(staticInst, true);
+    }
+    if (debug::MatrixCmd && staticInst->isMatrix() && staticInst->isMicroop() && staticInst->isFirstMicroop()) {
+        traceCSI(staticInst, true);
     }
 }
 

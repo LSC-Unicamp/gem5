@@ -71,6 +71,8 @@ class ExeTracerRecord : public InstRecord
 
     void traceInst(const StaticInstPtr &inst, bool ran);
 
+    void traceCSI(const StaticInstPtr &inst, bool ran);
+
     void dump();
 
   protected:
