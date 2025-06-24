@@ -731,9 +731,10 @@ def template MatrixStoreMicroConstructor {{
     this->flags[IsStore] = true;
 
     cmd.opcode = (_machInst.nf << 5) | (_machInst.width);
-    cmd.ms1 = MatrixCmd::Register::M0;
+    cmd.ms1 = cmd.md;
+    cmd.md = MatrixCmd::Register::M0;
+    cmd.mdsew = MatrixCmd::SEW::_1;
     cmd.ms2 = MatrixCmd::Register::M0;
-    cmd.ms1sew = MatrixCmd::SEW::_1;
     cmd.ms2sew = MatrixCmd::SEW::_1;
 }
 
@@ -757,9 +758,10 @@ def template MatrixStridedStoreMicroConstructor {{
     this->flags[IsStore] = true;
 
     cmd.opcode = (_machInst.nf << 5) | (_machInst.width);
-    cmd.ms1 = MatrixCmd::Register::M0;
+    cmd.ms1 = cmd.md;
+    cmd.md = MatrixCmd::Register::M0;
+    cmd.mdsew = MatrixCmd::SEW::_1;
     cmd.ms2 = MatrixCmd::Register::M0;
-    cmd.ms1sew = MatrixCmd::SEW::_1;
     cmd.ms2sew = MatrixCmd::SEW::_1;
 }
 
