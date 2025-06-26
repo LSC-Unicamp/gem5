@@ -5160,7 +5160,7 @@ decode QUADRANT default Unknown::unknown() {
                     0x2: MatrixArithLineOp::mmacf({{
                         float acc = Mrs3_mc->as<float>()[row * 4 + col];
                         for (int j = 0; j < 4; j++) {
-                            acc += Mrs1_mc->as<float>()[row * 4 + j] * Mrs2_mc->as<float>()[col * 4 + j];
+                            acc = __builtin_fma(Mrs1_mc->as<float>()[row * 4 + j], Mrs2_mc->as<float>()[col * 4 + j], acc);
                         }
                         Mrd_sf[row * 4 + col] = acc;
                     }});
