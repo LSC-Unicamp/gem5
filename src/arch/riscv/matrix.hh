@@ -24,10 +24,10 @@ class MatStore
 {
     // static_assert(MLEN > 0, "MLEN size must be bigger than 0");
 
-    static constexpr size_t RLEN = 128; // in bits
-    static constexpr size_t LINES = RLEN / 32;
+    static constexpr size_t RLEN = 2048; // in bits
+    // static constexpr size_t LINES = RLEN;
 
-    static constexpr size_t LINEAR_SIZE = (RLEN * RLEN / 32) / 8;
+    static constexpr size_t LINEAR_SIZE = (RLEN * RLEN) / 8;
   public:
     // static constexpr inline size_t xSize() { return 8; };
     // static constexpr inline size_t ySize() { return LINES; };
